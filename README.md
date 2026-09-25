@@ -91,6 +91,8 @@ npm run test:teeth             # 34/34 design: token-drift, forbidden-defaults, 
 npm run build                  # Next.js production build, 8 routes
 ```
 
+> Every command above passes from a clean clone with no extra flags and no keys.
+
 ## Run the full protective flow (mainnet fork)
 
 The live on-chain flow (the unattended repay + the six custody controls) runs against a mainnet fork you boot yourself, so you see real Kamino state and a real protective repay with zero cost and zero mainnet writes. This path needs the pinned Solana toolchain (`solana-install 2.3.0`, `anchor 0.32`) and boots a local validator:

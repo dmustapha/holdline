@@ -1,0 +1,7 @@
+{
+  "deploy_mode": "repo-only",
+  "hosted_url": null,
+  "mutation_probe": null,
+  "note": "Repo-only deploy (owner chose $0 mainnet-fork). The judged live surface is the clone-run fork flow, not a hosted URL; no cold-callable hosted mutation exists. The demo-path mutation is POST /api/demo/simulate-gap, demo-gated by HOLDLINE_DEMO=1 against a locally booted fork.",
+  "required_env": ["RPC_URL", "KEEPER_PUBKEY", "SAFE_BUFFER_BPS", "KLEND_PROGRAM_ID", "XSTOCKS_MARKET", "USDC_MINT"]
+}
