@@ -1,3 +1,0 @@
-[holdline] keeper up: pubkey=6CMXkt54YZdyC6tK3ZqbKJeTMYWazknZNjxDbdz5a1mT pollMs=15000
-[holdline] release_to_keeper vault=Beg7SJXGoLbrhn5Psr9cU3nrf4qTS6BxVeWHVMAZXt23 amount=2438276 sig=VVfZdSNRBhCXQrTBx2VHYSnnBh9jA8F2o3Fm2m38MF8T4y9zYq8fKo5NZuhsbX3DiiZh7W72dWTUuewf43AMpk1
-[holdline] ProtectFired (top-level repay) vault=Beg7SJXGoLbrhn5Psr9cU3nrf4qTS6BxVeWHVMAZXt23 amount=2438276 sig=3Ysw2tUBhsip55dkU4ULotmCtvgmb1C5nDcx3fHAL3ZRGWYwgeunjj9vUcL9YFrDgN9qXveN5KxmbSYnbkJnNRd1

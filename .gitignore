@@ -52,3 +52,14 @@ app/.env.local
 *.tsbuildinfo
 keeper/status.json
 evidence/keeper-log.jsonl
+
+# Localnet fork runtime artifacts — never tracked
+.localnet-ledger/
+test-ledger/
+.keeper-run.log
+.localnet-boot.log
+*.log
+scripts/overrides/
+scripts/clone-accounts.json
+scripts/demo-obligation.json
+scripts/seed-result.json
