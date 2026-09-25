@@ -1,7 +1,8 @@
 // File: keeper/src/index.ts
 // [C3 / E-1] The unattended poll loop. Each tick: if the market is CLOSED, load the Kamino market,
-// scan every armed vault, and for any obligation at/over its trigger LTV, fire a capped release_repay
-// signed by the KEEPER ONLY (no user popup — INVARIANT #1). Every tick + fire is written to the
+// scan every armed vault, and for any obligation at/over its trigger LTV, fire an ATOMIC capped
+// release+repay (one tx: release_to_keeper enforces the bound-obligation repay in the same tx —
+// INVARIANT #2) signed by the KEEPER ONLY (no user popup — INVARIANT #1). Every tick + fire is written to the
 // public append-only autonomy log and the liveness heartbeat (E-1 evidence).
 //
 // Worker isolation (ARCHITECTURE §N+5): each vault is processed in its own try/catch; one failing
@@ -11,7 +12,7 @@
 // NOT RUN against mainnet here (no creds staged). The live fire is the C3 HERO GATE (DEV-007).
 import { Connection, Keypair } from "@solana/web3.js";
 import { makeRpc, loadMarket } from "../../adapters/kamino/src/market";
-import { fireReleaseRepay } from "./fire";
+import { fireReleaseRepayTopLevel } from "./fire-toplevel";
 import { detect } from "./detect";
 import { CFG, loadArmedVaults, type ArmedVault } from "./config";
 import { appendTick, appendFire, writeHeartbeat } from "./autonomy-log";
@@ -41,7 +42,8 @@ async function processVault(
   const ltvBefore = d.ltvBps ?? 0;
   await appendTick({ ts: nowSec(), obligation: v.obligation, ltvBps: ltvBefore, marketClosed: true, decision: "fire" });
 
-  const sig = await fireReleaseRepay(conn, keeper, market, v, d.repayAmount);
+  const fired = await fireReleaseRepayTopLevel(conn, keeper, rpc, market, v, d.repayAmount);
+  const sig = fired.repaySig;
 
   // Self-correction: re-read LTV after the fire on a fresh market load.
   const afterSlot = await rpc.getSlot().send();

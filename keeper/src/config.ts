@@ -58,12 +58,13 @@ const coder = new BorshAccountsCoder(idl as never);
 
 // Real Anchor decode of a VaultState account buffer -> ArmedVault (debt/collateral filled at tick).
 export function decodeVaultState(pubkey: PublicKey, data: Buffer): ArmedVault {
+  // Anchor 0.32 emits snake_case field names in the IDL; BorshAccountsCoder preserves them.
   const s = coder.decode("VaultState", data) as {
     owner: PublicKey;
     obligation: PublicKey;
     keeper: PublicKey;
-    triggerLtvBps: number;
-    capPerFire: BN;
+    trigger_ltv_bps: number;
+    cap_per_fire: BN;
   };
   const [reserveUsdc] = PublicKey.findProgramAddressSync(
     [Buffer.from("reserve"), pubkey.toBuffer()],
@@ -80,8 +81,8 @@ export function decodeVaultState(pubkey: PublicKey, data: Buffer): ArmedVault {
     reserveAuthority: reserveAuthority.toString(),
     owner: s.owner.toString(),
     keeper: s.keeper.toString(),
-    triggerLtvBps: s.triggerLtvBps,
-    capPerFire: s.capPerFire.toNumber(),
+    triggerLtvBps: s.trigger_ltv_bps,
+    capPerFire: s.cap_per_fire.toNumber(),
     safeBufferBps: SAFE_BUFFER_BPS,
     debtUsdc: 0,
     collateralUsdc: 0,

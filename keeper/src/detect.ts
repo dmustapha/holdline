@@ -21,12 +21,20 @@ export interface Detection {
 // Decides whether (and how much) to fire for one vault. Reads LTV + debt/collateral through the
 // adapter, then applies the pure core trigger math. Returns 0 repay when the market is open or
 // LTV is below trigger.
+// Demo-only clock override: HOLDLINE_NOW (ISO string) lets the fork demo evaluate market-hours at a
+// real closed-hours moment (a weekend), since the host system clock can't be moved. It changes ONLY
+// the timestamp fed to the unchanged isClosed() rule — the weekend/closed logic itself is untouched.
+function evalNow(): Date {
+  const iso = process.env.HOLDLINE_NOW;
+  return iso ? new Date(iso) : new Date();
+}
+
 export async function detect(
   market: KaminoMarket,
   currentSlot: bigint,
   v: ArmedVault
 ): Promise<Detection> {
-  const marketClosed = isClosed(new Date());
+  const marketClosed = isClosed(evalNow());
   if (!marketClosed) {
     return { marketClosed: false, ltvBps: null, repayAmount: 0, debtUsdc: 0, collateralUsdc: 0 };
   }

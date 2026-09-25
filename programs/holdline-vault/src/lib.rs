@@ -30,6 +30,10 @@ pub mod holdline_vault {
     pub fn release_repay(ctx: Context<ReleaseRepay>, repay_amount: u64) -> Result<()> {
         instructions::release_repay::handler(ctx, repay_amount)
     }
+    // Custody leg for the top-level protective repay (KLend blocks repay-via-CPI — DEV-015).
+    pub fn release_to_keeper(ctx: Context<ReleaseToKeeper>, amount: u64) -> Result<()> {
+        instructions::release_to_keeper::handler(ctx, amount)
+    }
     pub fn reclaim(ctx: Context<Reclaim>, amount: u64) -> Result<()> {
         instructions::reclaim::handler(ctx, amount)
     }

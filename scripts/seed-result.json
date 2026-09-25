@@ -1,0 +1,11 @@
+{
+  "vault": "Beg7SJXGoLbrhn5Psr9cU3nrf4qTS6BxVeWHVMAZXt23",
+  "obligation": "2qvrAwYC68q6zyN4BzV9b8tvupGcZjnfQVmCFKf9gkgi",
+  "owner": "4vk4fPshu5iiDeyyoJ4j7gdwhgP3CdrkYEyQA1x4QRCz",
+  "reserveUsdc": "59hsFjTJmaRkZ8kdQkhkwXQYV3a47yp1DSrgNww5nJP8",
+  "reserveAuthority": "BcGzgo2HUawnddYATYpzw3in1nuw9nFCiQbsJRjwYs8m",
+  "triggerLtvBps": 7000,
+  "capPerFireUsdc": 10,
+  "reserveFundedUsdc": 10,
+  "fundSig": "2EP7v8jTqdTFUDNtt8vhh3Hg5eWZdmYH64Fz9SmvR3ZXW74SpU8bM5kU1YhBiuZo6ivMjU5U5kKRBRP2a1rkWwYB"
+}

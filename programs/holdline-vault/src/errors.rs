@@ -12,4 +12,6 @@ pub enum VaultError {
     CapExceeded,
     #[msg("VAULT_OWNER_ONLY: reclaim returns only to owner")]
     OwnerOnly,
+    #[msg("VAULT_REPAY_NOT_ENFORCED: release requires an atomic repay of the bound obligation in the same transaction")]
+    RepayNotEnforced,
 }
