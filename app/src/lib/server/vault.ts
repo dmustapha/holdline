@@ -22,7 +22,7 @@ import {
   createAssociatedTokenAccountInstruction,
   getAccount,
 } from "@solana/spl-token";
-import idl from "../../../../target/idl/holdline_vault.json";
+import idl from "../../../../idl/holdline_vault.json";
 
 const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const VAULT_PROGRAM_ID = new PublicKey(idl.address);

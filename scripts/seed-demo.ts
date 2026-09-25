@@ -16,7 +16,7 @@ import {
   type TransactionSigner,
 } from "@solana/kit";
 import bs58 from "bs58";
-import idl from "../target/idl/holdline_vault.json";
+import idl from "../idl/holdline_vault.json";
 import { loadMarket, USDC_MINT } from "../adapters/kamino/src/market";
 import { buildBorrow } from "../adapters/kamino/src/txns";
 import { decodeKeeperSecret } from "../keeper/src/config";

@@ -5,7 +5,7 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { BorshAccountsCoder, BN } from "@coral-xyz/anchor";
 import bs58 from "bs58";
-import idl from "../../target/idl/holdline_vault.json";
+import idl from "../../idl/holdline_vault.json";
 
 // VaultState::LEN = 8 (disc) + 32*4 (owner,obligation,usdc_mint,keeper) + 2 (trigger_ltv_bps)
 //                 + 8*2 (cap_per_fire,total_repaid) + 8 (last_fire_ts) + 1 + 1 (bumps).

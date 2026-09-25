@@ -9,7 +9,7 @@ import { Program, AnchorProvider, Wallet, BN } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import idl from "../target/idl/holdline_vault.json";
+import idl from "../idl/holdline_vault.json";
 
 const RPC = process.env.RPC_URL ?? "http://127.0.0.1:8899";
 const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");

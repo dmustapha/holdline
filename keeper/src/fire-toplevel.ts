@@ -14,7 +14,7 @@ import { Program, AnchorProvider, Wallet, BN } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { createSolanaRpc, address, createKeyPairSignerFromBytes, type Address } from "@solana/kit";
 import { KaminoMarket, KaminoAction, type KaminoObligation } from "@kamino-finance/klend-sdk";
-import idl from "../../target/idl/holdline_vault.json";
+import idl from "../../idl/holdline_vault.json";
 import type { ArmedVault } from "./config";
 
 const USDC_MINT = address("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
