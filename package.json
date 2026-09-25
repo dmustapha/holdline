@@ -1,7 +1,7 @@
 {
   "name": "holdline",
   "private": true,
-  "workspaces": ["core", "adapters/kamino", "keeper", "app"],
+  "workspaces": ["core", "adapters/kamino", "keeper"],
   "scripts": {
     "keeper": "ts-node keeper/src/index.ts",
     "seed": "ts-node scripts/seed-demo.ts",

@@ -43,3 +43,9 @@ gap-map.md
 pipeline-log.md
 .input-manifest.json
 tasks/
+
+# Next.js app build artifacts
+app/.next/
+app/node_modules/
+app/next-env.d.ts
+app/.env.local
