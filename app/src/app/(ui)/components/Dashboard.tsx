@@ -48,6 +48,7 @@ export function Dashboard() {
   const [discovered, setDiscovered] = useState<OwnerObligation[] | null>(null);
   const [discovering, setDiscovering] = useState(false);
   const [discoverErr, setDiscoverErr] = useState<string | null>(null);
+  const [discoverNonce, setDiscoverNonce] = useState(0); // bump to retry discovery
 
   const [demoMode, setDemoMode] = useState(false);
   const [showDevPaste, setShowDevPaste] = useState(false);
@@ -120,9 +121,9 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-    // loadedVia intentionally excluded — we only react to wallet identity changes.
+    // loadedVia intentionally excluded — we only react to wallet identity changes + retry nonce.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey, loadPosition]);
+  }, [publicKey, loadPosition, discoverNonce]);
 
   // E-3: keeper liveness is a GLOBAL signal — fetched independently of the obligation/market so a
   // keeper or /api/protect/status outage still surfaces the loud OFFLINE strip (refuse-don't-degrade).
@@ -222,6 +223,13 @@ export function Dashboard() {
           {connected && !discovering && discoverErr && (
             <>
               <p className="hl-error">Could not read your positions: {discoverErr}</p>
+              <button
+                className="hl-btn"
+                style={{ marginTop: 10 }}
+                onClick={() => setDiscoverNonce((n) => n + 1)}
+              >
+                Retry
+              </button>
             </>
           )}
           {connected && !discovering && !discoverErr && discovered?.length === 0 && (
