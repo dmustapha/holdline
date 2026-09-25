@@ -26,6 +26,33 @@ export interface ObligationView {
   availableToBorrowUsdc: number;
 }
 
+// Wallet-first discovery (change-order v3, F-009). Lists the connected owner's obligations on this
+// market by owner address — the REAL on-chain read the SDK exposes (getAllUserObligations). Returns a
+// light summary per obligation so the UI can auto-load the borrowed one and label a picker. No fake:
+// if the owner has none, this returns []. Quarantined here (frontend never touches klend-sdk).
+export interface OwnerObligation {
+  address: string;
+  ltvBps: number;
+  debtUsdc: number;
+  hasBorrow: boolean;
+}
+
+export async function listOwnerObligations(
+  market: KaminoMarket,
+  owner: Address
+): Promise<OwnerObligation[]> {
+  const obs: KaminoObligation[] = await market.getAllUserObligations(owner);
+  return obs.map((ob) => {
+    const debtUsdc = Number(ob.refreshedStats.userTotalBorrow);
+    return {
+      address: String(ob.obligationAddress),
+      ltvBps: Math.round(Number(ob.loanToValue()) * 10_000),
+      debtUsdc,
+      hasBorrow: debtUsdc > 0,
+    };
+  });
+}
+
 export async function readObligationView(
   market: KaminoMarket,
   obligation: Address,

@@ -11,6 +11,7 @@ non-zero on any mismatch or missing/unresolvable account. Read-back-only is not 
 | 3 | A real USDC borrow was opened on Kamino | BORROW_TX | getTransaction confirmed, not err | PENDING |
 | 4 | The keeper fired release_repay UNATTENDED (the hero) | RELEASE_REPAY_TX | getTransaction confirmed; ProtectFired event present | PENDING |
 | 5 | Owner reclaimed the residual reserve | RECLAIM_TX | getTransaction confirmed, not err | PENDING |
+| 6 | Wallet-first discovery reads the owner's REAL obligations (no fake) | F-009 (FEATURE-OBSERVABLES) | `GET /api/kamino/obligations?owner=` returns addresses resolved from live `getAllUserObligations`; demo position is an honest labelled opt-in | VERIFIED-on-fork |
 
 Status legend: PENDING (no artifact yet) · VERIFIED (verify-claims passed) · FAILED (mismatch).
 Claims move to VERIFIED only via a passing `npm run verify` run, never by hand.

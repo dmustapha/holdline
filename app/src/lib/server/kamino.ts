@@ -79,6 +79,14 @@ export async function getObligationView(obligation: string): Promise<ObligationV
   return readObligationView(market, address(obligation), address(USDC_MINT), slot);
 }
 
+// Wallet-first discovery (change-order v3, F-009): list the owner's real Kamino obligations on the
+// xStocks market. Returns [] when the owner has none — the UI then offers the honest demo toggle.
+export async function getObligationsForOwner(owner: string) {
+  const { market } = await loadMarketRpc();
+  const { listOwnerObligations } = await obligationMod();
+  return listOwnerObligations(market, address(owner));
+}
+
 export const ADDRESSES = {
   market: XSTOCKS_MARKET as unknown as Address,
   usdcMint: USDC_MINT as unknown as Address,

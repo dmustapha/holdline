@@ -32,6 +32,24 @@ export function fetchMarket(obligation?: string) {
   return get<MarketSnapshot>(`/api/kamino/market${q}`);
 }
 
+// Wallet-first discovery (change-order v3, F-009): the connected owner's real Kamino obligations.
+export interface OwnerObligation {
+  address: string;
+  ltvBps: number;
+  debtUsdc: number;
+  hasBorrow: boolean;
+}
+export function fetchObligations(owner: string) {
+  return get<{ owner: string; obligations: OwnerObligation[] }>(
+    `/api/kamino/obligations?owner=${owner}`
+  );
+}
+
+// Server-reported demo mode (HOLDLINE_DEMO) — gates DemoControls off the real user surface.
+export function fetchDemoMode() {
+  return get<{ demo: boolean }>(`/api/demo/mode`);
+}
+
 export function fetchProtectStatus(owner: string, obligation: string) {
   return get<ProtectStatus>(
     `/api/protect/status?owner=${owner}&obligation=${obligation}`
