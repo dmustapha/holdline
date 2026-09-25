@@ -1,13 +1,18 @@
 // tests/contracts/idl-structure.test.ts — offline structural tier (*.test.ts, in default gate).
 // Proves INVARIANT #2 (structural repay-only): the vault exposes ONLY the sanctioned spend paths and
 // NO generic transfer/withdraw/send instruction. That absence IS the custody guarantee. The two spend
-// paths (release_repay via CPI + release_to_keeper for the top-level repay klend requires — DEV-015)
+// paths (release_repay via CPI + release_to_keeper for the top-level repay klend requires)
 // are BOTH keeper-gated + capped + destination-locked. Credential-free, asserts against the built IDL.
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const IDL_PATH = resolve(__dirname, "../../target/idl/holdline_vault.json");
+// Prefer the committed interface copy (present on a clean clone); fall back to the anchor build output.
+const IDL_CANDIDATES = [
+  resolve(__dirname, "../../idl/holdline_vault.json"),
+  resolve(__dirname, "../../target/idl/holdline_vault.json"),
+];
+const IDL_PATH = IDL_CANDIDATES.find((p) => existsSync(p)) ?? IDL_CANDIDATES[0];
 const idl = JSON.parse(readFileSync(IDL_PATH, "utf8"));
 const names: string[] = idl.instructions.map((i: { name: string }) => i.name);
 

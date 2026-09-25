@@ -1,0 +1,691 @@
+{
+  "address": "4YSxGTVgKBca27gxkgZRK4GbxGm2afnBTya7mTLiSJcw",
+  "metadata": {
+    "name": "holdline_vault",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "fund_reserve",
+      "discriminator": [
+        17,
+        82,
+        71,
+        222,
+        117,
+        210,
+        58,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "owner_usdc",
+          "writable": true
+        },
+        {
+          "name": "reserve_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_vault",
+      "discriminator": [
+        77,
+        79,
+        85,
+        150,
+        33,
+        217,
+        52,
+        106
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "obligation"
+        },
+        {
+          "name": "usdc_mint",
+          "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "obligation"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "docs": [
+            "reserve PDA authority owns the reserve token account; only release_repay/reclaim sign for it"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "trigger_ltv_bps",
+          "type": "u16"
+        },
+        {
+          "name": "cap_per_fire",
+          "type": "u64"
+        },
+        {
+          "name": "keeper",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "reclaim",
+      "discriminator": [
+        44,
+        177,
+        236,
+        249,
+        145,
+        109,
+        163,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "reserve_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_usdc",
+          "docs": [
+            "destination MUST be an account owned by vault.owner — no other target is representable"
+          ],
+          "writable": true
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "release_repay",
+      "discriminator": [
+        220,
+        86,
+        102,
+        76,
+        119,
+        80,
+        96,
+        65
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.obligation",
+                "account": "VaultState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "obligation",
+          "writable": true
+        },
+        {
+          "name": "lending_market"
+        },
+        {
+          "name": "repay_reserve",
+          "writable": true
+        },
+        {
+          "name": "reserve_liquidity_mint"
+        },
+        {
+          "name": "reserve_destination_liquidity",
+          "writable": true
+        },
+        {
+          "name": "keeper",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "klend_program",
+          "address": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"
+        },
+        {
+          "name": "instruction_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "repay_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "release_to_keeper",
+      "discriminator": [
+        137,
+        255,
+        182,
+        63,
+        197,
+        97,
+        237,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.obligation",
+                "account": "VaultState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "keeper_usdc",
+          "docs": [
+            "destination MUST be a USDC account owned by the keeper — no other target is representable."
+          ],
+          "writable": true
+        },
+        {
+          "name": "keeper",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "obligation",
+          "docs": [
+            "(never written) to cap the release at the reserve's live debt (full custody closure)."
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "VaultState",
+      "discriminator": [
+        228,
+        196,
+        82,
+        165,
+        98,
+        210,
+        235,
+        152
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ProtectFired",
+      "discriminator": [
+        209,
+        30,
+        166,
+        136,
+        120,
+        132,
+        15,
+        72
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ScopeViolation",
+      "msg": "VAULT_SCOPE_VIOLATION: repay target/obligation/amount outside the bound scope"
+    },
+    {
+      "code": 6001,
+      "name": "UnauthorizedKeeper",
+      "msg": "VAULT_UNAUTHORIZED_KEEPER: only the registered keeper may invoke release_repay"
+    },
+    {
+      "code": 6002,
+      "name": "CapExceeded",
+      "msg": "VAULT_CAP_EXCEEDED: repay_amount exceeds cap_per_fire"
+    },
+    {
+      "code": 6003,
+      "name": "OwnerOnly",
+      "msg": "VAULT_OWNER_ONLY: reclaim returns only to owner"
+    },
+    {
+      "code": 6004,
+      "name": "RepayNotEnforced",
+      "msg": "VAULT_REPAY_NOT_ENFORCED: release requires an atomic repay of the bound obligation in the same transaction"
+    },
+    {
+      "code": 6005,
+      "name": "MultipleReleases",
+      "msg": "VAULT_MULTIPLE_RELEASES: a transaction may contain exactly one release_to_keeper (prevents double-release skim)"
+    },
+    {
+      "code": 6006,
+      "name": "OverReleaseBeyondDebt",
+      "msg": "VAULT_OVER_RELEASE_BEYOND_DEBT: released amount exceeds the bound obligation's live debt for the repay reserve"
+    },
+    {
+      "code": 6007,
+      "name": "BadObligation",
+      "msg": "VAULT_BAD_OBLIGATION: obligation account is not klend-owned or too small to introspect"
+    }
+  ],
+  "types": [
+    {
+      "name": "ProtectFired",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "obligation",
+            "type": "pubkey"
+          },
+          {
+            "name": "repay_amount",
+            "type": "u64"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "obligation",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "trigger_ltv_bps",
+            "type": "u16"
+          },
+          {
+            "name": "cap_per_fire",
+            "type": "u64"
+          },
+          {
+            "name": "total_repaid",
+            "type": "u64"
+          },
+          {
+            "name": "last_fire_ts",
+            "type": "i64"
+          },
+          {
+            "name": "reserve_bump",
+            "type": "u8"
+          },
+          {
+            "name": "state_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
