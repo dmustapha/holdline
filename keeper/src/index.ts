@@ -1,5 +1,5 @@
 // File: keeper/src/index.ts
-// [C3 / E-1] The unattended poll loop. Each tick: if the market is CLOSED, load the Kamino market,
+// The unattended poll loop. Each tick: if the market is CLOSED, load the Kamino market,
 // scan every armed vault, and for any obligation at/over its trigger LTV, fire an ATOMIC capped
 // release+repay (one tx: release_to_keeper enforces the bound-obligation repay in the same tx —
 // INVARIANT #2) signed by the KEEPER ONLY (no user popup — INVARIANT #1). Every tick + fire is written to the
@@ -9,13 +9,13 @@
 // vault never blocks the others. Self-correction: after a fire the loop re-reads LTV; if still over
 // trigger and the reserve has room it fires again next tick up to cap; reserve exhaustion => PARTIAL.
 //
-// NOT RUN against mainnet here (no creds staged). The live fire is the C3 HERO GATE (DEV-007).
+// NOT RUN against mainnet here (no creds staged). The live fire is the hero gate.
 import { Connection, Keypair } from "@solana/web3.js";
 import { makeRpc, loadMarket } from "../../adapters/kamino/src/market";
 import { fireReleaseRepayTopLevel } from "./fire-toplevel";
 import { detect } from "./detect";
 import { CFG, loadArmedVaults, type ArmedVault } from "./config";
-import { appendTick, appendFire, writeHeartbeat } from "./autonomy-log";
+import { appendTick, appendFire, writeHeartbeat, type HeartbeatTick } from "./autonomy-log";
 
 // Process one vault end-to-end: detect -> (maybe) fire -> re-read -> log. Isolated per vault.
 async function processVault(
@@ -67,20 +67,22 @@ async function tick(conn: Connection, keeper: Keypair, rpc: ReturnType<typeof ma
   } catch (err) {
     console.error("[holdline] loadArmedVaults failed:", err);
     await appendTick({ ts: nowSec, obligation: "-", ltvBps: null, marketClosed: false, decision: "error" });
-    await writeHeartbeat({ ts: nowSec, lastTick: { ts: nowSec, ltvBps: null, fired: false, partial: false, shortfallUsdc: null } });
+    await writeHeartbeat({ ts: nowSec, lastTick: { ts: nowSec, obligation: null, ltvBps: null, fired: false, partial: false, shortfallUsdc: null }, ticks: [] });
     return;
   }
 
   if (vaults.length === 0) {
     await appendTick({ ts: nowSec, obligation: "-", ltvBps: null, marketClosed: false, decision: "no-armed-vaults" });
-    await writeHeartbeat({ ts: nowSec, lastTick: { ts: nowSec, ltvBps: null, fired: false, partial: false, shortfallUsdc: null } });
+    await writeHeartbeat({ ts: nowSec, lastTick: { ts: nowSec, obligation: null, ltvBps: null, fired: false, partial: false, shortfallUsdc: null }, ticks: [] });
     return;
   }
 
-  let last = { fired: false, partial: false, ltvBps: null as number | null, shortfallUsdc: null as number | null };
+  // Per-obligation outcomes so the app can attribute partial/fire to the SPECIFIC vault (MF-1/MF-2).
+  const ticks: HeartbeatTick[] = [];
   for (const v of vaults) {
     try {
-      last = await processVault(conn, keeper, rpc, v);
+      const out = await processVault(conn, keeper, rpc, v);
+      ticks.push({ ts: Math.floor(Date.now() / 1000), obligation: v.obligation, ltvBps: out.ltvBps, fired: out.fired, partial: out.partial, shortfallUsdc: out.shortfallUsdc });
     } catch (err) {
       // Worker isolation: log + continue; one bad vault never blocks the others.
       console.error(`[holdline] vault ${v.vault} tick failed:`, err);
@@ -88,10 +90,13 @@ async function tick(conn: Connection, keeper: Keypair, rpc: ReturnType<typeof ma
     }
   }
 
-  // Heartbeat reflects the last processed vault's outcome (liveness + last-tick summary).
+  // Heartbeat carries every vault's outcome. lastTick stays for backward-compat (DEV-013) and,
+  // in the single-vault demo, equals the only processed vault — identical behaviour.
+  const lastTick = ticks[ticks.length - 1] ?? { ts: Math.floor(Date.now() / 1000), obligation: null, ltvBps: null, fired: false, partial: false, shortfallUsdc: null };
   await writeHeartbeat({
     ts: Math.floor(Date.now() / 1000),
-    lastTick: { ts: Math.floor(Date.now() / 1000), ltvBps: last.ltvBps, fired: last.fired, partial: last.partial, shortfallUsdc: last.shortfallUsdc },
+    lastTick,
+    ticks,
   });
 }
 

@@ -1,43 +1,61 @@
-/* Holdline — craft-floor baseline (warm-editorial-dark). Tokens now; a full design pass lands
-   in the design_forge phase. This is a FLOOR, not the ceiling: radius scale (CF-1), ≥2 elevation
-   levels (CF-2), inset-glass (CF-3), hover+focus depth (CF-4), clamp fluid type. */
+/* Holdline — Night Watch design system (Stage 4 selected direction).
+   Midnight-indigo world · one brand color (moon #6C8CFF) carried through opacity derivatives ·
+   Fraunces display serif + Familjen Grotesk body · signal-light verdicts · vigil watch-pulse
+   signature · physical inset health gauge. Class vocabulary preserved from the build baseline so
+   all component wiring + honesty surfaces (E-2/E-6/E-3) are untouched. */
 
 :root {
   /* radius scale (CF-1) */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 999px;
 
-  /* warm-editorial-dark palette */
-  --bg-base: #0b0b0c;
-  --surface-1: #141416;
-  --surface-2: #1c1c20;
-  --border-hair: rgba(255, 255, 255, 0.07);
-  --border-soft: rgba(255, 255, 255, 0.12);
+  /* midnight-indigo world */
+  --bg-base: #0a0e1a;
+  --surface-1: #10162a;
+  --surface-2: #161e38;
+  --surface-3: #1d2848;
+  --border-hair: rgba(108, 140, 255, 0.12);
+  --border-soft: rgba(108, 140, 255, 0.22);
+  --hairline-2: rgba(108, 140, 255, 0.06);
 
-  --text-hi: #f4f1ea;
-  --text-mid: #b6b2a8;
-  --text-low: #7d7a72;
+  --text-hi: #eaeefb;
+  --text-mid: #9ba6c9;
+  --text-low: #868fb5; /* raised from #6a748f: tertiary caption text now clears WCAG AA 4.5:1 on every surface (CF/contrast tooth) */
 
-  --amber: #f0a63c;
-  --amber-soft: rgba(240, 166, 60, 0.14);
+  /* one brand color + opacity derivatives */
+  --moon: #6c8cff;
+  --moon-55: rgba(108, 140, 255, 0.55);
+  --moon-32: rgba(108, 140, 255, 0.32);
+  --moon-12: rgba(108, 140, 255, 0.12);
+  --moon-06: rgba(108, 140, 255, 0.06);
+  /* legacy alias: the baseline used --amber for the brand accent (btn-primary, focus, inputs) */
+  --amber: #6c8cff;
+  --amber-soft: rgba(108, 140, 255, 0.14);
 
-  /* muted jewel verdicts */
-  --safe: #4c9a72;
-  --safe-soft: rgba(76, 154, 114, 0.16);
-  --warn: #c8973c;
-  --warn-soft: rgba(200, 151, 60, 0.16);
-  --danger: #b4553f;
-  --danger-soft: rgba(180, 85, 63, 0.18);
+  /* semantic signal lights */
+  --safe: #35d6a4;
+  --safe-soft: rgba(53, 214, 164, 0.12);
+  --warn: #f5b841;
+  --warn-soft: rgba(245, 184, 65, 0.12);
+  --danger: #ff5c6c;
+  --danger-soft: rgba(255, 92, 108, 0.1);
 
-  /* elevation tokens (CF-2) — bg delta + layered shadow */
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  /* elevation ladder (CF-2/CF-3 — inset highlight + layered drop) */
+  --elev-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 2px 6px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 20px 48px rgba(0, 0, 0, 0.55),
+    0 8px 20px rgba(0, 0, 0, 0.45);
+  --glow-moon: 0 0 0 1px var(--moon-32), 0 8px 30px rgba(108, 140, 255, 0.22);
 
-  --ring: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--amber);
+  --ring: 0 0 0 3px var(--moon-55);
+
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Familjen Grotesk", ui-sans-serif, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -50,22 +68,24 @@ body {
   padding: 0;
   background: var(--bg-base);
   color: var(--text-hi);
-  font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
 }
 
 body {
   background-image: radial-gradient(
-    1200px 600px at 50% -10%,
-    rgba(240, 166, 60, 0.06),
-    transparent 60%
-  );
+      1200px 700px at 50% -12%,
+      rgba(108, 140, 255, 0.1),
+      transparent 60%
+    ),
+    radial-gradient(800px 500px at 85% 8%, rgba(108, 140, 255, 0.05), transparent 55%);
   min-height: 100vh;
 }
 
 a {
-  color: var(--amber);
+  color: var(--moon);
   text-decoration: none;
 }
 a:hover {
@@ -79,37 +99,46 @@ a:hover {
 }
 
 .hl-shell {
-  max-width: 920px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: clamp(16px, 4vw, 40px);
+  padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 24px) 96px;
 }
 
 .hl-h1 {
-  font-size: clamp(1.7rem, 3.5vw, 2.6rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 5.4vw + 0.4rem, 3.9rem);
+  line-height: 1.03;
+  letter-spacing: -0.025em;
+  margin: 0 0 16px;
+  max-width: 15ch;
+}
+/* italic tail on the hero verb ("…in your sleep.") reads as the moonlit accent word */
+.hl-h1 em {
+  font-style: italic;
+  color: var(--moon);
 }
 .hl-sub {
   color: var(--text-mid);
-  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  font-size: clamp(0.98rem, 1.6vw, 1.12rem);
   margin: 0 0 28px;
-  max-width: 60ch;
+  max-width: 62ch;
 }
 
 .hl-card {
-  background: var(--surface-1);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
   border: 1px solid var(--border-hair);
   border-radius: var(--radius-lg);
-  box-shadow: var(--elev-1);
-  padding: clamp(16px, 3vw, 26px);
-  margin-bottom: 20px;
+  box-shadow: var(--elev-2);
+  padding: clamp(18px, 3vw, 26px);
+  margin-bottom: 18px;
 }
 .hl-card-title {
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-low);
+  letter-spacing: 0.2em;
+  color: var(--moon);
+  font-weight: 600;
   margin: 0 0 14px;
 }
 
@@ -117,111 +146,205 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
 .hl-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 .hl-stat b {
-  font-size: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
 .hl-stat span {
   color: var(--text-low);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
 }
 
 .hl-btn {
   appearance: none;
-  border: 1px solid var(--border-soft);
-  background: var(--surface-2);
+  font-family: inherit;
+  border: 1px solid var(--border-hair);
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
   color: var(--text-hi);
   font-size: 0.95rem;
   font-weight: 600;
-  padding: 11px 18px;
-  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-shadow: var(--elev-1);
 }
 .hl-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--elev-2);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-2), var(--glow-moon);
+}
+.hl-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 .hl-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 .hl-btn-primary {
-  background: linear-gradient(180deg, #f6b352, var(--amber));
-  color: #1a1206;
+  background: linear-gradient(180deg, #7d9bff, var(--moon));
+  color: #0a0e1a;
   border-color: transparent;
+  box-shadow: var(--glow-moon), var(--elev-1);
+}
+.hl-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 10px 34px rgba(108, 140, 255, 0.4), var(--glow-moon);
 }
 
 .hl-input {
   width: 100%;
   background: var(--bg-base);
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--border-hair);
   border-radius: var(--radius-md);
   color: var(--text-hi);
+  font-family: inherit;
   font-size: 1rem;
-  padding: 11px 14px;
+  padding: 13px 15px;
   font-variant-numeric: tabular-nums;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.18s ease, box-shadow 0.2s ease;
 }
 .hl-input:focus {
-  border-color: var(--amber);
+  outline: none;
+  border-color: var(--moon-55);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 3px var(--moon-12);
 }
 .hl-range {
   width: 100%;
-  accent-color: var(--amber);
+  accent-color: var(--moon);
 }
 .hl-label {
   display: block;
   color: var(--text-mid);
   font-size: 0.82rem;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 .hl-field {
   margin-bottom: 16px;
 }
 
-/* HealthBar (CF applied) */
+/* ---------- HealthBar — physical inset gauge (signature object) ---------- */
 .hl-health {
-  margin-top: 6px;
+  margin-top: 8px;
+}
+/* the gauge reserves headroom so the marker stems drop down onto the track */
+.hl-gauge {
+  position: relative;
+  padding-top: 34px;
 }
 .hl-track {
-  height: 14px;
-  border-radius: var(--radius-full);
-  background: var(--surface-2);
-  overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
   position: relative;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    rgba(53, 214, 164, 0.14),
+    rgba(245, 184, 65, 0.14) 68%,
+    rgba(255, 92, 108, 0.18)
+  );
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  overflow: visible;
 }
 .hl-fill {
+  position: relative;
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 400ms ease, background 300ms ease;
+  transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1), background 300ms ease;
+}
+/* the raised precision knob rides the end of the fill */
+.hl-fill::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  background: radial-gradient(circle at 35% 30%, #ffffff, currentColor);
+  box-shadow: 0 0 0 4px rgba(10, 14, 26, 0.9), 0 0 14px currentColor;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 .hl-health[data-zone="safe"] .hl-fill {
-  background: linear-gradient(90deg, #3f7f5e, var(--safe));
+  background: linear-gradient(90deg, #2fb891, var(--safe));
+  color: var(--safe);
+  box-shadow: 0 0 16px rgba(53, 214, 164, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .hl-health[data-zone="warn"] .hl-fill {
-  background: linear-gradient(90deg, #a97e2f, var(--warn));
+  background: linear-gradient(90deg, #d19a2c, var(--warn));
+  color: var(--warn);
+  box-shadow: 0 0 16px rgba(245, 184, 65, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .hl-health[data-zone="danger"] .hl-fill {
-  background: linear-gradient(90deg, #8f4232, var(--danger));
+  background: linear-gradient(90deg, #e04656, var(--danger));
+  color: var(--danger);
+  box-shadow: 0 0 16px rgba(255, 92, 108, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.hl-health[data-zone="unknown"] .hl-fill {
+  background: var(--surface-3);
+  color: var(--text-low);
+}
+.hl-health[data-zone="unknown"] .hl-fill::after {
+  display: none;
+}
+/* threshold marker stems pinned onto the gauge (trigger / liquidation) */
+.hl-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.hl-marker .hl-cap {
+  font-size: 10.5px;
+  color: var(--text-low);
+  white-space: nowrap;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.hl-marker .hl-stem {
+  width: 2px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--border-soft);
+}
+.hl-marker.trigger .hl-stem {
+  background: var(--warn);
+  opacity: 0.65;
+}
+.hl-marker.trigger .hl-cap {
+  color: var(--warn);
+}
+.hl-marker.liq .hl-stem {
+  background: var(--danger);
+  opacity: 0.65;
+}
+.hl-marker.liq .hl-cap {
+  color: var(--danger);
 }
 .hl-legend {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 14px;
   font-size: 0.8rem;
   color: var(--text-mid);
   gap: 8px;
@@ -229,40 +352,47 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* status pills / banners */
+/* ---------- verdict pills (signal lamps) ---------- */
 .hl-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.8rem;
+  gap: 8px;
+  font-size: 0.76rem;
   font-weight: 600;
-  padding: 5px 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 13px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-soft);
+  border: 1px solid transparent;
 }
 .hl-pill::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: var(--radius-full);
   background: currentColor;
+  box-shadow: 0 0 8px currentColor;
 }
 .hl-pill-safe {
   color: var(--safe);
   background: var(--safe-soft);
+  border-color: rgba(53, 214, 164, 0.28);
 }
 .hl-pill-warn {
   color: var(--warn);
   background: var(--warn-soft);
+  border-color: rgba(245, 184, 65, 0.28);
 }
 .hl-pill-danger {
   color: var(--danger);
   background: var(--danger-soft);
+  border-color: rgba(255, 92, 108, 0.28);
 }
 
+/* ---------- banners (E-3 loud states) ---------- */
 .hl-banner {
   border-radius: var(--radius-md);
-  padding: 13px 16px;
+  padding: 14px 16px;
   margin-bottom: 16px;
   font-size: 0.92rem;
   border: 1px solid transparent;
@@ -270,59 +400,173 @@ a:hover {
 }
 .hl-banner-danger {
   background: var(--danger-soft);
-  border-color: rgba(180, 85, 63, 0.4);
-  color: #eab7ab;
+  border-color: rgba(255, 92, 108, 0.4);
+  box-shadow: inset 3px 0 0 var(--danger), var(--elev-1);
+  color: #ffc2c8;
 }
 .hl-banner-warn {
   background: var(--warn-soft);
-  border-color: rgba(200, 151, 60, 0.4);
-  color: #ecd39a;
+  border-color: rgba(245, 184, 65, 0.4);
+  box-shadow: inset 3px 0 0 var(--warn), var(--elev-1);
+  color: #f6dca0;
 }
 .hl-banner b {
   color: var(--text-hi);
 }
 
+/* ---------- E-6 liveness line (inline, inside Protect card) ---------- */
 .hl-live-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: var(--text-mid);
   font-size: 0.88rem;
-  margin-top: 12px;
+  margin-top: 14px;
   font-variant-numeric: tabular-nums;
 }
-.hl-live-dot {
-  width: 8px;
-  height: 8px;
+
+/* ---------- E-3/E-6 always-visible keeper liveness strip — the SIGNATURE vigil pulse ---------- */
+.hl-live-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px;
   border-radius: var(--radius-full);
+  border: 1px solid var(--moon-12);
+  background: linear-gradient(
+    180deg,
+    rgba(22, 30, 56, 0.9),
+    rgba(16, 22, 42, 0.9)
+  );
+  box-shadow: var(--elev-2), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  color: var(--text-hi);
+  font-size: 0.92rem;
+  font-weight: 500;
+  margin-bottom: 22px;
+}
+.hl-live-strip b {
+  color: var(--safe);
+  font-weight: 600;
+}
+.hl-live-strip[data-off="true"] {
+  border-color: rgba(255, 92, 108, 0.5);
+  background: var(--danger-soft);
+  color: #ffc2c8;
+  box-shadow: inset 3px 0 0 var(--danger), var(--elev-2);
+}
+.hl-live-strip[data-off="true"] b {
+  color: var(--danger);
+}
+/* the vigil dot: a breathing core + a radiating heartbeat ring */
+.hl-live-dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
   background: var(--safe);
-  box-shadow: 0 0 0 0 var(--safe-soft);
-  animation: hl-pulse 2s infinite;
+  box-shadow: 0 0 10px rgba(53, 214, 164, 0.9), 0 0 22px rgba(53, 214, 164, 0.5);
+  animation: hl-vigil-dot 2.4s ease-in-out infinite;
+}
+.hl-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--safe);
+  animation: hl-vigil-ring 2.4s ease-out infinite;
 }
 .hl-live-dot[data-off="true"] {
   background: var(--danger);
+  box-shadow: 0 0 10px rgba(255, 92, 108, 0.8);
   animation: none;
 }
-@keyframes hl-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(76, 154, 114, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(76, 154, 114, 0);
-  }
+.hl-live-dot[data-off="true"]::after {
+  display: none;
+}
+@keyframes hl-vigil-dot {
+  0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(76, 154, 114, 0);
+    transform: scale(0.86);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes hl-vigil-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.75;
+  }
+  70%,
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
   }
 }
 
+/* ---------- DemoControls: the on-screen demo surface ---------- */
+.hl-demo {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(
+      600px 200px at 80% -30%,
+      rgba(108, 140, 255, 0.14),
+      transparent 60%
+    ),
+    linear-gradient(180deg, var(--surface-3), var(--surface-2));
+  border: 1px solid var(--moon-32);
+  box-shadow: var(--elev-3), var(--glow-moon);
+}
+.hl-demo .hl-card-title {
+  color: var(--moon);
+}
+
+/* ---------- disclosure (progressive detail) ---------- */
+details.hl-disc {
+  margin-top: 16px;
+  border-top: 1px solid var(--hairline-2);
+  padding-top: 14px;
+}
+details.hl-disc > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--moon);
+  font-weight: 600;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+details.hl-disc > summary::-webkit-details-marker {
+  display: none;
+}
+details.hl-disc > summary::before {
+  content: "›";
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 16px;
+}
+details.hl-disc[open] > summary::before {
+  transform: rotate(90deg);
+}
+details.hl-disc .hl-disc-body {
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+
 .hl-error {
-  color: #eab7ab;
+  color: #ffc2c8;
   font-size: 0.88rem;
   margin-top: 10px;
 }
 .hl-muted {
   color: var(--text-low);
-  font-size: 0.85rem;
+  font-size: 0.86rem;
 }
 .hl-mono {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -331,10 +575,11 @@ a:hover {
   word-break: break-all;
 }
 
+/* ---------- modal ---------- */
 .hl-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(5, 8, 18, 0.66);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -345,9 +590,16 @@ a:hover {
 .hl-modal {
   width: 100%;
   max-width: 460px;
-  background: var(--surface-1);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--elev-2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 26px;
+  box-shadow: var(--elev-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

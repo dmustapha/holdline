@@ -73,15 +73,20 @@ export interface ProtectStatus {
   };
 }
 
+export interface HeartbeatTick {
+  ts: number;
+  obligation: string | null; // added (MF-1/MF-2) so partial/fire attributes to a specific vault
+  ltvBps: number | null;
+  fired: boolean;
+  partial: boolean;
+  shortfallUsdc: number | null;
+}
+
 export interface KeeperStatus {
   online: boolean;
   lastSeenTs: number | null;
   stalenessSec: number | null;
-  lastTick: {
-    ts: number;
-    ltvBps: number | null;
-    fired: boolean;
-    partial: boolean;
-    shortfallUsdc: number | null;
-  } | null;
+  lastTick: HeartbeatTick | null;
+  // Every armed vault's outcome from the last tick; absent on older/single-vault heartbeats.
+  ticks?: HeartbeatTick[];
 }

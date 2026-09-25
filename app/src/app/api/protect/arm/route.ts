@@ -4,12 +4,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildArmIxs } from "@/lib/server/vault";
 import { serializeWeb3Ix } from "@/lib/serialize";
+import { isValidPubkey, parseJsonBody } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await parseJsonBody(req);
+    if (!body) {
+      return NextResponse.json({ error: "malformed JSON body" }, { status: 400 });
+    }
     const { owner, obligation, triggerLtvBps, capPerFireUsdc, reserveAmountUsdc } = body;
     if (!owner || !obligation || triggerLtvBps == null || capPerFireUsdc == null) {
       return NextResponse.json(
@@ -17,7 +21,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (triggerLtvBps <= 0 || triggerLtvBps >= 10_000) {
+    if (!isValidPubkey(owner) || !isValidPubkey(obligation)) {
+      return NextResponse.json(
+        { error: "owner and obligation must be valid addresses" },
+        { status: 400 }
+      );
+    }
+    const triggerBps = Number(triggerLtvBps);
+    if (!Number.isFinite(triggerBps) || triggerBps <= 0 || triggerBps >= 10_000) {
       return NextResponse.json(
         { error: "triggerLtvBps must be between 1 and 9999" },
         { status: 400 }

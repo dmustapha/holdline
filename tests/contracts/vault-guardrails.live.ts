@@ -10,7 +10,7 @@
 //  - CapExceeded / UnauthorizedKeeper / ScopeViolation / OwnerOnly REJECTION paths
 //    (all reject BEFORE any klend CPI — positive control: a wrong obligation is rejected)
 //  DEFERRED (DEV-007): the release_repay HAPPY-path fire (real klend debt reduction) needs a
-//  live/forked klend obligation — that is the C3 HERO GATE. It is NOT faked here.
+//  live/forked klend obligation — that is the live hero fire. It is NOT faked here.
 import { describe, it, expect, beforeAll } from "vitest";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, Keypair, SystemProgram, Connection } from "@solana/web3.js";
@@ -166,8 +166,8 @@ describe.skipIf(!hasEnv)("Holdline Vault guardrails (local validator, Gate C2)",
 });
 
 // DEFERRED (DEV-007 UNTESTED): release_repay HAPPY-path fire — real klend debt reduction.
-// Requires a live/forked klend obligation with debt + a funded reserve. This is the C3 HERO GATE.
+// Requires a live/forked klend obligation with debt + a funded reserve. This is the live hero fire.
 // It is deliberately NOT written as a passing assertion here; no debt-reduction result is fabricated.
-describe.skip("release_repay HAPPY fire (C3 HERO GATE — needs forked klend obligation)", () => {
+describe.skip("release_repay HAPPY fire (live hero fire, needs forked klend obligation)", () => {
   it.skip("reduces obligation debt by repay_amount via klend CPI", () => {});
 });

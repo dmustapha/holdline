@@ -11,6 +11,7 @@ import {
 import {
   Program,
   AnchorProvider,
+  BorshAccountsCoder,
   BN,
   type Idl,
   type Wallet,
@@ -25,6 +26,11 @@ import idl from "../../../../target/idl/holdline_vault.json";
 
 const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const VAULT_PROGRAM_ID = new PublicKey(idl.address);
+// Decode VaultState with a directly-constructed coder (the proven keeper path in keeper/src/config.ts).
+// `new Program(idl).coder.accounts` normalizes the IDL in Anchor 0.32 and drops the "VaultState" key,
+// so decoding an EXISTING vault threw "Account not found: VaultState" (500) — a bug latent until a
+// vault actually exists on-chain (the armed demo state). A raw BorshAccountsCoder keeps the name.
+const accountsCoder = new BorshAccountsCoder(idl as Idl);
 
 function rpcUrl(): string {
   const url = process.env.RPC_URL;
@@ -149,21 +155,22 @@ export async function readVault(
   obligation: string
 ): Promise<VaultAccount | null> {
   const conn = getConnection();
-  const program = readOnlyProgram(conn);
   const vault = deriveVaultPda(new PublicKey(owner), new PublicKey(obligation));
 
   const raw = await conn.getAccountInfo(vault);
   if (!raw) return null;
 
-  const state = program.coder.accounts.decode("VaultState", raw.data) as {
+  // Anchor 0.32 emits snake_case field names in the IDL; BorshAccountsCoder preserves them
+  // (same as keeper/src/config.ts decodeVaultState — the proven decode path).
+  const state = accountsCoder.decode("VaultState", raw.data) as {
     owner: PublicKey;
     obligation: PublicKey;
-    usdcMint: PublicKey;
+    usdc_mint: PublicKey;
     keeper: PublicKey;
-    triggerLtvBps: number;
-    capPerFire: BN;
-    totalRepaid: BN;
-    lastFireTs: BN;
+    trigger_ltv_bps: number;
+    cap_per_fire: BN;
+    total_repaid: BN;
+    last_fire_ts: BN;
   };
 
   const reserveUsdc = deriveReservePda(vault);
@@ -178,12 +185,12 @@ export async function readVault(
   return {
     owner: state.owner.toBase58(),
     obligation: state.obligation.toBase58(),
-    usdcMint: state.usdcMint.toBase58(),
+    usdcMint: state.usdc_mint.toBase58(),
     keeper: state.keeper.toBase58(),
-    triggerLtvBps: state.triggerLtvBps,
-    capPerFireUsdc: state.capPerFire.toNumber() / 1_000_000,
-    totalRepaidUsdc: state.totalRepaid.toNumber() / 1_000_000,
-    lastFireTs: state.lastFireTs.toNumber(),
+    triggerLtvBps: state.trigger_ltv_bps,
+    capPerFireUsdc: state.cap_per_fire.toNumber() / 1_000_000,
+    totalRepaidUsdc: state.total_repaid.toNumber() / 1_000_000,
+    lastFireTs: state.last_fire_ts.toNumber(),
     reserveBalanceUsdc,
   };
 }

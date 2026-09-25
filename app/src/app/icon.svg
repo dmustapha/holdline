@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="Holdline">
+  <defs>
+    <radialGradient id="hl-moon" cx="13" cy="12" r="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#eaefff"/>
+      <stop offset="52%" stop-color="#6c8cff"/>
+      <stop offset="100%" stop-color="#3d55c9"/>
+    </radialGradient>
+  </defs>
+  <rect x="1" y="1" width="38" height="38" rx="11" fill="url(#hl-moon)"/>
+  <circle cx="41" cy="4" r="20" fill="#0a0e1a"/>
+  <rect x="9" y="27.5" width="22" height="3" rx="1.5" fill="#0a0e1a"/>
+</svg>

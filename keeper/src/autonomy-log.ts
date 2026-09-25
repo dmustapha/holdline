@@ -1,11 +1,13 @@
 // File: keeper/src/autonomy-log.ts
-// [CRITIQUE E-1] Autonomy evidence + liveness source. Writes TWO artifacts each tick:
+// Autonomy evidence + liveness source. Writes TWO artifacts each tick:
 //   1. evidence/keeper-log.jsonl — append-only, timestamped public log. Each tick line and each
 //      fire line is one JSON object. The fire's on-chain blockTime must fall BETWEEN two logged
 //      polls with no correlated human action — that gap IS the autonomy proof.
 //   2. keeper/status.json — the heartbeat the app's readKeeperStatus() consumes for liveness
 //      (fail-closed OFFLINE if missing/stale). Shape bound to app/src/lib/server/keeper-status.ts
-//      (DEV-013): { ts, lastTick: { ts, ltvBps, fired, partial, shortfallUsdc } }.
+//      (DEV-013): { ts, lastTick: { ts, obligation, ltvBps, fired, partial, shortfallUsdc } }.
+//      `obligation` was added (MF-1/MF-2) so a multi-vault heartbeat can be attributed to the
+//      specific obligation the app queries; older readers ignore the extra field (backward-compatible).
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -29,16 +31,24 @@ export interface FireRecord {
   ltvAfter: number | null;
 }
 
+// The per-obligation outcome of one vault in a tick. `obligation` lets the app attribute a
+// partial/fire to the SPECIFIC vault it queries (MF-1/MF-2) instead of the last-processed one.
+export interface HeartbeatTick {
+  ts: number;
+  obligation: string | null;
+  ltvBps: number | null;
+  fired: boolean;
+  partial: boolean;
+  shortfallUsdc: number | null;
+}
+
 // The app's heartbeat shape (DEV-013). Written every tick so liveness stays fresh.
+// `lastTick` stays for backward-compatibility (single-vault demo behaves identically);
+// `ticks` carries every armed vault's outcome so the app can filter by obligation.
 interface Heartbeat {
   ts: number;
-  lastTick: {
-    ts: number;
-    ltvBps: number | null;
-    fired: boolean;
-    partial: boolean;
-    shortfallUsdc: number | null;
-  } | null;
+  lastTick: HeartbeatTick | null;
+  ticks?: HeartbeatTick[];
 }
 
 async function ensureDirs(): Promise<void> {

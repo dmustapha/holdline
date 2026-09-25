@@ -14,4 +14,10 @@ pub enum VaultError {
     OwnerOnly,
     #[msg("VAULT_REPAY_NOT_ENFORCED: release requires an atomic repay of the bound obligation in the same transaction")]
     RepayNotEnforced,
+    #[msg("VAULT_MULTIPLE_RELEASES: a transaction may contain exactly one release_to_keeper (prevents double-release skim)")]
+    MultipleReleases,
+    #[msg("VAULT_OVER_RELEASE_BEYOND_DEBT: released amount exceeds the bound obligation's live debt for the repay reserve")]
+    OverReleaseBeyondDebt,
+    #[msg("VAULT_BAD_OBLIGATION: obligation account is not klend-owned or too small to introspect")]
+    BadObligation,
 }

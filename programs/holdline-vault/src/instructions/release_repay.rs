@@ -3,9 +3,9 @@
 // It moves USDC only via a Kamino KLend repay_obligation_liquidity CPI for vault.obligation, capped.
 //
 // [CPI ACCOUNT SET: VERIFIED] — bound to klend repay_obligation_liquidity (V1) from
-// spike/repay-probe/PROBE-RESULT.md (verified against on-chain source + klend IDL). See DEV-005/DEV-006.
+// the on-chain source + klend IDL. See DEV-005/DEV-006.
 // [HAPPY-PATH FIRE: UNTESTED] — actual debt reduction requires a live/forked klend obligation
-// (C3 HERO GATE). See DEV-007. This pass proves: it compiles with the real CPI bound + all
+// (hero gate). See DEV-007. This pass proves: it compiles with the real CPI bound + all
 // vault guardrails reject before the CPI is ever reached.
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::pubkey;
@@ -67,7 +67,7 @@ pub fn handler(ctx: Context<ReleaseRepay>, repay_amount: u64) -> Result<()> {
     let resauth_bump = ctx.bumps.reserve_authority;
     let signer_seeds: &[&[&[u8]]] = &[&[b"resauth", vault_key.as_ref(), &[resauth_bump]]];
 
-    // repay_obligation_liquidity account metas — EXACT order/flags from PROBE-RESULT.md.
+    // repay_obligation_liquidity account metas — EXACT order/flags from the verified on-chain probe.
     let accounts = vec![
         AccountMeta::new_readonly(ctx.accounts.reserve_authority.key(), true), // 1. owner (signer)
         AccountMeta::new(ctx.accounts.obligation.key(), false),                // 2. obligation (w)

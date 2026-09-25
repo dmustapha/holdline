@@ -3,6 +3,7 @@
 // route per ARCHITECTURE §N+9. Reads through the kit-native adapter (DEV-004).
 import { NextRequest, NextResponse } from "next/server";
 import { ADDRESSES, getObligationView } from "@/lib/server/kamino";
+import { isValidPubkey } from "@/lib/server/validate";
 import type { MarketSnapshot } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -18,6 +19,9 @@ export async function GET(req: NextRequest) {
       obligation: null,
     };
     if (obligation) {
+      if (!isValidPubkey(obligation)) {
+        return NextResponse.json({ error: "obligation is not a valid address" }, { status: 400 });
+      }
       const view = await getObligationView(obligation);
       snapshot.obligation = { address: obligation, ...view };
     }

@@ -11,8 +11,10 @@ import { RepayCard } from "./RepayCard";
 import { ArmProtectModal } from "./ArmProtectModal";
 import { ProtectStatusCard } from "./ProtectStatusCard";
 import { DemoControls } from "./DemoControls";
-import { fetchMarket, fetchProtectStatus } from "@/lib/client/api";
-import type { MarketSnapshot, ProtectStatus } from "@/lib/types";
+import { KeeperLivenessStrip } from "./KeeperLivenessStrip";
+import { HoldlineLogo } from "./HoldlineLogo";
+import { fetchMarket, fetchProtectStatus, fetchKeeperStatus } from "@/lib/client/api";
+import type { MarketSnapshot, ProtectStatus, KeeperStatus } from "@/lib/types";
 
 // wallet button is client-only (SSR would try to read window)
 const WalletMultiButton = dynamic(
@@ -30,12 +32,26 @@ export function Dashboard() {
   const [obligationInput, setObligationInput] = useState<string>("");
   const [market, setMarket] = useState<MarketSnapshot | null>(null);
   const [protect, setProtect] = useState<ProtectStatus | null>(null);
+  const [keeper, setKeeper] = useState<KeeperStatus | null>(null);
+  const [keeperErr, setKeeperErr] = useState<string | null>(null);
   const [marketErr, setMarketErr] = useState<string | null>(null);
   const [protectErr, setProtectErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showArm, setShowArm] = useState(false);
 
   const owner = publicKey?.toBase58() || DEMO_OWNER;
+
+  // E-3: keeper liveness is a GLOBAL signal — fetched independently of the obligation/market so a
+  // keeper or /api/protect/status outage still surfaces the loud OFFLINE strip (refuse-don't-degrade).
+  const refreshKeeper = useCallback(async () => {
+    try {
+      setKeeper(await fetchKeeperStatus());
+      setKeeperErr(null);
+    } catch (e) {
+      setKeeper(null);
+      setKeeperErr(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!obligation) return;
@@ -60,6 +76,13 @@ export function Dashboard() {
     refresh();
   }, [refresh]);
 
+  // Keeper liveness: fetch on mount + poll every 30s, independent of the obligation.
+  useEffect(() => {
+    refreshKeeper();
+    const id = setInterval(refreshKeeper, 30_000);
+    return () => clearInterval(id);
+  }, [refreshKeeper]);
+
   // E-6: keep the liveness line fresh — poll status every 30s.
   useEffect(() => {
     if (!obligation || !owner) return;
@@ -77,7 +100,13 @@ export function Dashboard() {
     <div className="hl-shell">
       <div className="hl-row" style={{ marginBottom: 24 }}>
         <div>
-          <h1 className="hl-h1">Never get liquidated in your sleep.</h1>
+          <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <HoldlineLogo />
+            <span className="hl-card-title" style={{ margin: 0 }}>Night Watch</span>
+          </div>
+          <h1 className="hl-h1">
+            Never get liquidated in your <em>sleep.</em>
+          </h1>
           <p className="hl-sub">
             Your xStock trades 24/7, but the underlying equity closes overnight. Holdline watches
             your Kamino loan while the market is shut and, if it drifts toward liquidation, repays
@@ -86,6 +115,9 @@ export function Dashboard() {
         </div>
         <WalletMultiButton />
       </div>
+
+      {/* E-3: always-visible keeper liveness — OFFLINE stays loud even if status/market calls fail */}
+      <KeeperLivenessStrip keeper={keeper} error={keeperErr} />
 
       {!obligation && (
         <div className="hl-card">
@@ -120,6 +152,15 @@ export function Dashboard() {
             triggerBps={protect?.triggerLtvBps ?? Math.max(0, ob.liquidationLtvBps - 1000)}
             liqBps={ob.liquidationLtvBps}
           />
+          <details className="hl-disc">
+            <summary>What is loan-to-value?</summary>
+            <div className="hl-disc-body">
+              Loan-to-value (LTV) is your debt divided by the value of the collateral backing it.
+              As your xStock collateral falls in price, LTV rises. If it crosses the liquidation
+              threshold, Kamino can sell your collateral to cover the loan. Holdline steps in at
+              the trigger — before that ever happens.
+            </div>
+          </details>
         </div>
       )}
       {marketErr && (
@@ -158,6 +199,15 @@ export function Dashboard() {
           {!publicKey && (
             <p className="hl-muted" style={{ marginTop: 10 }}>Connect a wallet to arm.</p>
           )}
+          <details className="hl-disc">
+            <summary>How the repay actually runs</summary>
+            <div className="hl-disc-body">
+              The keeper is an off-chain watcher paired with an on-chain permission you grant, scoped
+              only to repaying your Kamino loan from the reserve you funded. It cannot move funds
+              anywhere else, and you can revoke it at any time. This is self-custodial: the reserve
+              stays yours, and Holdline never takes custody.
+            </div>
+          </details>
         </div>
       )}
 

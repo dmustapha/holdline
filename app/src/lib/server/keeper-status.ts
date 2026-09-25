@@ -4,7 +4,7 @@
 // rendered green. (Layer 4 graceful degradation, ARCHITECTURE §N+4.)
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { KeeperStatus } from "../types";
+import type { KeeperStatus, HeartbeatTick } from "../types";
 
 // A poll cadence miss of >3 ticks (POLL_MS default 60s) => stale/offline.
 const POLL_MS = Number(process.env.POLL_MS ?? 60_000);
@@ -18,15 +18,19 @@ function statusPath(): string {
   return path.join(process.cwd(), "..", "keeper", "status.json");
 }
 
+interface RawTick {
+  ts: number;
+  obligation?: string | null;
+  ltvBps: number | null;
+  fired: boolean;
+  partial: boolean;
+  shortfallUsdc: number | null;
+}
+
 interface RawHeartbeat {
   ts: number; // unix seconds of last tick
-  lastTick?: {
-    ts: number;
-    ltvBps: number | null;
-    fired: boolean;
-    partial: boolean;
-    shortfallUsdc: number | null;
-  } | null;
+  lastTick?: RawTick | null;
+  ticks?: RawTick[];
 }
 
 export async function readKeeperStatus(): Promise<KeeperStatus> {
@@ -51,10 +55,12 @@ export async function readKeeperStatus(): Promise<KeeperStatus> {
   const stalenessSec = nowSec - raw.ts;
   const online = stalenessSec * 1000 <= STALE_AFTER_MS;
 
+  const normalize = (t: RawTick): HeartbeatTick => ({ ...t, obligation: t.obligation ?? null });
   return {
     online,
     lastSeenTs: raw.ts,
     stalenessSec,
-    lastTick: raw.lastTick ?? null,
+    lastTick: raw.lastTick ? normalize(raw.lastTick) : null,
+    ticks: Array.isArray(raw.ticks) ? raw.ticks.map(normalize) : undefined,
   };
 }

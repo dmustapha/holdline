@@ -1,4 +1,4 @@
-# CLAIMS — Holdline headline claims ledger
+# CLAIMS, Holdline headline claims ledger
 
 Every headline claim maps to a machine-checkable on-chain artifact in `submission/proof.md`.
 `npm run verify` (scripts/verify-claims.ts) re-resolves each artifact on mainnet and exits

@@ -1,0 +1,29 @@
+{
+  "name": "Holdline",
+  "tagline": "Don't get liquidated in your sleep.",
+  "colorMode": "dark-only",
+  "brandColor": "#6c8cff",
+  "ink": ["#0a0e1a", "#10162a", "#161e38", "#1d2848", "#eaeefb"],
+  "semantic": {
+    "success": "#35d6a4",
+    "warning": "#f5b841",
+    "danger": "#ff5c6c"
+  },
+  "fonts": {
+    "display": "Fraunces",
+    "body": "Familjen Grotesk",
+    "mono": "ui-monospace"
+  },
+  "radii": { "sm": 8, "md": 14, "lg": 20, "xl": 28 },
+  "shadowPhilosophy": "soft-elevation",
+  "signatureElement": "Vigil watch-pulse — a breathing core dot with a radiating heartbeat ring on the always-visible keeper-liveness strip; red and still when the watcher is OFFLINE.",
+  "accent": "#6c8cff",
+  "invariantPhrase": "Don't get liquidated in your sleep.",
+  "statusLegend": [
+    { "color": "#35d6a4", "token": "WATCHER_ONLINE", "meaning": "Protect is watching; loan health is comfortably below the trigger LTV." },
+    { "color": "#f5b841", "token": "ZONE_WARN", "meaning": "Loan is drifting toward the trigger LTV; a repay may fire." },
+    { "color": "#ff5c6c", "token": "WATCHER_OFFLINE", "meaning": "Watcher is OFFLINE (fail-closed, loud) or loan is at liquidation risk." },
+    { "color": "#868fb5", "token": "ZONE_UNKNOWN", "meaning": "Live position not yet loaded — shown grey, never false green." }
+  ],
+  "logoPath": "public/logo.svg"
+}

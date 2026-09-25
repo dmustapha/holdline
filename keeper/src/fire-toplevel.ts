@@ -46,6 +46,7 @@ export async function buildReleaseIx(conn: Connection, keeper: Keypair, v: Armed
       keeper: keeper.publicKey,
       tokenProgram: TOKEN_PROGRAM,
       instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+      obligation: new PublicKey(v.obligation),
     })
     .instruction();
 }
@@ -53,7 +54,7 @@ export async function buildReleaseIx(conn: Connection, keeper: Keypair, v: Armed
 // Build the top-level Kamino repay ixs (refresh_reserve + refresh_obligation + repay_obligation_liquidity_v2)
 // of the bound obligation, funded from the keeper ATA, keeper-signed. Returned as web3 instructions so
 // they can be composed into a single tx alongside the vault release ix.
-async function buildRepayIxs(
+export async function buildRepayIxs(
   keeper: Keypair,
   rpc: ReturnType<typeof createSolanaRpc>,
   market: KaminoMarket,
@@ -92,7 +93,7 @@ async function buildRepayIxs(
 // Send a keeper-signed v0 tx from web3 instructions. Returns the confirmed sig. Throws (with the
 // program error surfaced from the confirmed tx meta) if the tx executed but reverted — required so the
 // positive control observes RepayNotEnforced even under skipPreflight.
-async function sendKeeperTx(conn: Connection, keeper: Keypair, instructions: TransactionInstruction[], skipPreflight = false): Promise<string> {
+export async function sendKeeperTx(conn: Connection, keeper: Keypair, instructions: TransactionInstruction[], skipPreflight = false): Promise<string> {
   const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
   const msg = new TransactionMessage({ payerKey: keeper.publicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
   const tx = new VersionedTransaction(msg);
@@ -138,7 +139,7 @@ export async function fireReleaseRepayTopLevel(
   return { releaseSig: sig, repaySig: sig, amountUsdc: amount / USDC_FACTOR };
 }
 
-// [POSITIVE CONTROL — E-5 / LAW#3 planted-red] Send ONLY the release_to_keeper ix (no following klend
+// [POSITIVE CONTROL] Send ONLY the release_to_keeper ix (no following klend
 // repay in the tx). This MUST fail with VaultError::RepayNotEnforced — proving the atomic enforcement
 // is real, not decorative. Returns the sig on the (unexpected) success path; throws on the expected fail.
 export async function fireReleaseOnly(

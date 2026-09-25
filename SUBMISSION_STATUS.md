@@ -1,4 +1,4 @@
-# Holdline — Submission Status (root honesty ledger)
+# Holdline, Submission Status (root honesty ledger)
 
 Build-phase honesty ledger. Every headline capability is REAL-or-unbuilt here; nothing is
 claimed until its on-chain artifact passes `npm run verify`. See CLAIMS.md + submission/proof.md.
@@ -7,22 +7,22 @@ claimed until its on-chain artifact passes `npm run verify`. See CLAIMS.md + sub
 
 | Capability | State | Proof gate |
 |---|---|---|
-| Anchor workspace compiles (`anchor build`) | BUILT (C0 skeleton — stub handlers, real state/errors) | build output, target/deploy/*.so |
+| Anchor workspace compiles (`anchor build`) | BUILT (C0 skeleton, stub handlers, real state/errors) | build output, target/deploy/*.so |
 | Vault program deployed to mainnet | NOT BUILT | CLAIMS #1 |
 | init_vault / fund_reserve / release_repay / reclaim logic | NOT BUILT (C0 stubs return Ok; C2 fills logic) | on-chain tx |
 | Real Kamino borrow | NOT BUILT | CLAIMS #3 |
 | Unattended keeper fire (HERO) | NOT BUILT | CLAIMS #4 |
 | Frontend borrow/arm/status/proof | NOT BUILT | livetest |
 
-## Credentials (Checkpoint-3 — user-staged, NOT invented)
+## Credentials (Checkpoint-3, user-staged, NOT invented)
 
 | Var | State |
 |---|---|
 | KEEPER_PUBKEY | STAGED (public, pinned) |
 | KLEND_PROGRAM_ID / XSTOCKS_MARKET / USDC_MINT / POLL_MS | STAGED (public, pinned) |
-| RPC_URL / NEXT_PUBLIC_RPC_URL | REPLACE_ME — user provides paid mainnet RPC |
-| KEEPER_SECRET | REPLACE_ME — user provides funded keeper keypair (off-host) |
-| DEMO_WALLET | REPLACE_ME — user funds demo wallet (real xStock + USDC) |
+| RPC_URL / NEXT_PUBLIC_RPC_URL | REPLACE_ME, user provides paid mainnet RPC |
+| KEEPER_SECRET | REPLACE_ME, user provides funded keeper keypair (off-host) |
+| DEMO_WALLET | REPLACE_ME, user funds demo wallet (real xStock + USDC) |
 
 ## Source lock (C0-resolved)
 

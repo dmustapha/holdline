@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { readVault, deriveVaultPda } from "@/lib/server/vault";
+import { isValidPubkey } from "@/lib/server/validate";
 import { getObligationView } from "@/lib/server/kamino";
 import { readKeeperStatus } from "@/lib/server/keeper-status";
 import { isClosed } from "../../../../../../core/src/market-hours";
@@ -15,7 +16,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Safe buffer target the reserve aims to restore the LTV to after a fire (bps).
-const SAFE_BUFFER_BPS = 5_000;
+// MUST match the keeper's SAFE_BUFFER_BPS (keeper/src/config.ts) or the UI coverage% will not
+// reflect what the keeper actually repays to. Sourced from the same env var to prevent drift.
+const SAFE_BUFFER_BPS = Number(process.env.SAFE_BUFFER_BPS ?? 6000);
 
 function minutesUntilMarketClose(now: Date): number | null {
   if (isClosed(now)) return null; // already closed — nothing to count down to
@@ -36,6 +39,12 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (!isValidPubkey(owner) || !isValidPubkey(obligation)) {
+      return NextResponse.json(
+        { error: "owner and obligation must be valid addresses" },
+        { status: 400 }
+      );
+    }
 
     const now = new Date();
     const [vault, keeper] = await Promise.all([
@@ -51,10 +60,20 @@ export async function GET(req: NextRequest) {
     let reserveCoversGapPct: number | null = null;
 
     if (vault) {
-      // E-3: prefer the keeper's own last-tick partial signal; a partial is always LOUD.
-      if (keeper.lastTick?.partial) {
+      // E-3 (MF-1/MF-2): attribute partial/fire to THIS obligation, never a different vault's.
+      // Prefer the per-obligation tick from `ticks`; fall back to `lastTick` only when it belongs
+      // to this obligation (or carries no id — single-vault demo, backward-compatible).
+      const tick =
+        keeper.ticks?.find((t) => t.obligation === obligation) ??
+        (keeper.lastTick &&
+        (keeper.lastTick.obligation == null || keeper.lastTick.obligation === obligation)
+          ? keeper.lastTick
+          : null);
+
+      // A partial is always LOUD.
+      if (tick?.partial) {
         saveState = "partial";
-        shortfallUsdc = keeper.lastTick.shortfallUsdc ?? null;
+        shortfallUsdc = tick.shortfallUsdc ?? null;
       } else if ((vault.totalRepaidUsdc ?? 0) > 0) {
         saveState = "full";
       }

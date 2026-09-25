@@ -1,4 +1,4 @@
-// GET /api/protect/keeper-status — [CRITIQUE E-1] autonomy-evidence surface.
+// GET /api/protect/keeper-status: autonomy-evidence surface.
 // Distinct from /api/keeper/status (liveness only): this exposes the poll cadence and the last
 // fire from the keeper's public append-only log, so a judge can verify the fire's on-chain
 // blockTime fell BETWEEN two autonomous polls with no correlated human action.
