@@ -7,7 +7,7 @@
     "seed": "ts-node scripts/seed-demo.ts",
     "verify": "ts-node scripts/verify-claims.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run tests/unit tests/integration --exclude '**/*.live.ts'",
+    "test": "vitest run tests/unit tests/integration tests/contracts --exclude '**/*.live.ts'",
     "test:core": "vitest run core",
     "test:live": "vitest run '**/*.live.ts'",
     "check": "npm run typecheck && npm run test"

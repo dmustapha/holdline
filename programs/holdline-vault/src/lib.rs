@@ -21,8 +21,8 @@ pub struct ProtectFired {
 #[program]
 pub mod holdline_vault {
     use super::*;
-    pub fn init_vault(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64) -> Result<()> {
-        instructions::init_vault::handler(ctx, trigger_ltv_bps, cap_per_fire)
+    pub fn init_vault(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64, keeper: Pubkey) -> Result<()> {
+        instructions::init_vault::handler(ctx, trigger_ltv_bps, cap_per_fire, keeper)
     }
     pub fn fund_reserve(ctx: Context<FundReserve>, amount: u64) -> Result<()> {
         instructions::fund_reserve::handler(ctx, amount)
