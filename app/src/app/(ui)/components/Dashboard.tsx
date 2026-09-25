@@ -6,7 +6,7 @@
 // toggle. The manual obligation paste survives only as a hidden developer fallback. DemoControls
 // render only under server-reported demo mode, never on the real user surface.
 import { useCallback, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { HealthBar } from "./HealthBar";
 import { BorrowCard } from "./BorrowCard";
@@ -15,7 +15,6 @@ import { ArmProtectModal } from "./ArmProtectModal";
 import { ProtectStatusCard } from "./ProtectStatusCard";
 import { DemoControls } from "./DemoControls";
 import { KeeperLivenessStrip } from "./KeeperLivenessStrip";
-import { HoldlineLogo } from "./HoldlineLogo";
 import {
   fetchMarket,
   fetchProtectStatus,
@@ -26,17 +25,11 @@ import {
 } from "@/lib/client/api";
 import type { MarketSnapshot, ProtectStatus, KeeperStatus } from "@/lib/types";
 
-// wallet button is client-only (SSR would try to read window)
-const WalletMultiButton = dynamic(
-  () =>
-    import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false }
-);
-
 const DEMO_OBLIGATION = process.env.NEXT_PUBLIC_DEMO_OBLIGATION || "";
 const DEMO_OWNER = process.env.NEXT_PUBLIC_DEMO_OWNER || "";
 
-export function Dashboard() {
+export function Dashboard({ mode = "consumer" }: { mode?: "consumer" | "demo" }) {
+  const isDemoSurface = mode === "demo";
   const { publicKey } = useWallet();
   // A loaded position is (obligation, owner) together — owner drives Protect status reads. It is set
   // by wallet discovery (owner = connected wallet), the demo toggle (owner = seeded demo owner), or
@@ -62,6 +55,7 @@ export function Dashboard() {
   const [protectErr, setProtectErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showArm, setShowArm] = useState(false);
+  const [gapNonce, setGapNonce] = useState(0); // bump after a simulated gap to burst-poll the fire
 
   const owner = obligationOwner;
 
@@ -167,38 +161,52 @@ export function Dashboard() {
     return () => clearInterval(id);
   }, [refreshKeeper]);
 
-  // E-6: keep the liveness line fresh — poll status every 30s.
+  // E-6: keep the liveness line + loan health fresh — re-read status AND market every 30s so the
+  // health bar reflects on-chain LTV without a manual reload (not just the Protect card).
   useEffect(() => {
     if (!obligation || !owner) return;
     const id = setInterval(() => {
-      fetchProtectStatus(owner, obligation)
-        .then(setProtect)
-        .catch(() => {});
+      fetchProtectStatus(owner, obligation).then(setProtect).catch(() => {});
+      fetchMarket(obligation).then(setMarket).catch(() => {});
     }, 30_000);
     return () => clearInterval(id);
   }, [obligation, owner]);
+
+  // After a simulated overnight gap, the keeper fires on its own next poll (~15s). Burst-poll
+  // market + status every 3s for ~45s so the health bar drops to green the moment the fire lands —
+  // no manual reload. Guarded to the demo surface (the only place a gap is armed).
+  useEffect(() => {
+    if (!gapNonce || !obligation) return;
+    let n = 0;
+    const id = setInterval(() => {
+      refresh();
+      if (++n >= 15) clearInterval(id);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [gapNonce, obligation, refresh]);
 
   const ob = market?.obligation;
   const connected = !!publicKey;
 
   return (
     <div className="hl-shell">
-      <div className="hl-row" style={{ marginBottom: 24 }}>
-        <div>
-          <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <HoldlineLogo />
-            <span className="hl-card-title" style={{ margin: 0 }}>Night Watch</span>
-          </div>
-          <h1 className="hl-h1">
-            Never get liquidated in your <em>sleep.</em>
-          </h1>
-          <p className="hl-sub">
-            Your xStock trades 24/7, but the underlying equity closes overnight. Holdline watches
-            your Kamino loan while the market is shut and, if it drifts toward liquidation, repays
-            from a reserve you fund and own. Self-custody. You keep the upside.
+      <div className="hl-hero" style={{ marginBottom: 24 }}>
+        <span className="hl-card-title" style={{ display: "block", marginBottom: 14 }}>
+          Night Watch
+        </span>
+        <h1 className="hl-h1">
+          Never get liquidated in your <em>sleep.</em>
+        </h1>
+        <p className="hl-sub">
+          Your xStock trades 24/7, but the underlying equity closes overnight. Holdline watches
+          your Kamino loan while the market is shut and, if it drifts toward liquidation, repays
+          from a reserve you fund and own. Self-custody. You keep the upside.
+        </p>
+        {isDemoSurface && (
+          <p className="hl-muted" style={{ marginTop: 12, fontSize: "0.9rem" }}>
+            Demo &amp; reviewer surface — load a seeded position below and watch Protect fire.
           </p>
-        </div>
-        <WalletMultiButton />
+        )}
       </div>
 
       {/* E-3: always-visible keeper liveness — OFFLINE stays loud even if status/market calls fail */}
@@ -236,14 +244,28 @@ export function Dashboard() {
             <>
               <p className="hl-card-title">No xStock loan found on this wallet</p>
               <p className="hl-muted" style={{ marginBottom: 14 }}>
-                Borrow against a Backed xStock on Kamino to protect it here. You can acquire xStock
-                on Jupiter or Backpack. We never fake a balance.
+                Holdline protects a loan you already have — it doesn&apos;t issue one. To create a
+                loan to protect: acquire an xStock (e.g. TSLAx, SPYx) on Jupiter or Backpack, borrow
+                USDC against it on Kamino, then come back here. We never fake a balance.
               </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <a
+                  className="hl-btn hl-btn-primary"
+                  href="https://app.kamino.finance/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open Kamino to borrow ↗
+                </a>
+                <Link className="hl-btn" href="/demo">
+                  See the live demo →
+                </Link>
+              </div>
             </>
           )}
 
-          {/* Honest, labelled demo path for a cold visitor (F-009) */}
-          {DEMO_OBLIGATION && (
+          {/* Honest, labelled demo path — ONLY on the /demo (judges) surface, never the consumer page */}
+          {isDemoSurface && DEMO_OBLIGATION && (
             <div style={{ marginTop: 8 }}>
               <button className="hl-btn" onClick={loadDemoPosition}>
                 Load demo position
@@ -255,7 +277,8 @@ export function Dashboard() {
             </div>
           )}
 
-          {/* Hidden developer fallback — manual obligation paste (never the primary path) */}
+          {/* Hidden developer fallback — manual obligation paste (demo/judges surface only) */}
+          {isDemoSurface && (
           <details className="hl-disc" style={{ marginTop: 14 }}>
             <summary onClick={() => setShowDevPaste(true)}>Developer: load an obligation by address</summary>
             {showDevPaste && (
@@ -284,6 +307,7 @@ export function Dashboard() {
               </div>
             )}
           </details>
+          )}
         </div>
       )}
 
@@ -377,8 +401,17 @@ export function Dashboard() {
         </>
       )}
 
-      {/* Demo control (E-2 honesty) — ONLY under server-reported demo mode, never on the real surface */}
-      {obligation && demoMode && <DemoControls onSimulateGap={refresh} />}
+      {/* Demo control (E-2 honesty) — ONLY on the /demo surface AND under server-reported demo mode,
+          never on the real consumer page. Arming the gap kicks off the burst-poll so the health bar
+          drops to green the moment the keeper fires. */}
+      {obligation && isDemoSurface && demoMode && (
+        <DemoControls
+          onSimulateGap={() => {
+            refresh();
+            setGapNonce((n) => n + 1);
+          }}
+        />
+      )}
 
       {showArm && ob && (
         <ArmProtectModal

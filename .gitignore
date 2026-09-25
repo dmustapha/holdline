@@ -72,3 +72,8 @@ scripts/seed-result.json
 debug-results/
 docs/prompts/
 docs/context/
+
+# Internal (TIER-3) — never track on the public repo
+DEMO-SCRIPT.md
+DEMO-FOOTGUNS.md
+HOSTING-RESEARCH.md

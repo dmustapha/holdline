@@ -1,6 +1,7 @@
 import { Dashboard } from "./(ui)/components/Dashboard";
 
-// The single judge-facing surface (ARCHITECTURE §7 / USER-ONBOARDING O-1..O-6).
+// The real consumer surface: connect-first wallet flow only. No demo/dev affordances live here —
+// those moved to /demo (the judges/reviewer surface). See change-order: demo/main split.
 export default function Page() {
-  return <Dashboard />;
+  return <Dashboard mode="consumer" />;
 }

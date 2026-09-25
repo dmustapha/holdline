@@ -603,3 +603,69 @@ details.hl-disc .hl-disc-body {
     transition: none !important;
   }
 }
+
+/* ── Top navigation bar (layout-level, persistent across / and /demo) ───────── */
+.hl-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: rgba(10, 14, 26, 0.82);
+  backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--border-hair);
+}
+.hl-nav-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 12px clamp(16px, 4vw, 24px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.hl-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-hi);
+}
+.hl-nav-brand:hover { color: var(--text-hi); }
+.hl-nav-word {
+  font-family: var(--font-display), serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+.hl-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+.hl-nav-link {
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.hl-nav-link:hover {
+  color: var(--text-hi);
+  background: var(--moon-06);
+}
+.hl-nav-link.is-active {
+  color: var(--text-hi);
+  background: var(--moon-12);
+  box-shadow: inset 0 0 0 1px var(--moon-32);
+}
+.hl-nav-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .hl-nav-word { display: none; }
+  .hl-nav-inner { gap: 8px; }
+}

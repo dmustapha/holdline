@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Familjen_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppWalletProvider } from "./(ui)/WalletProvider";
+import { TopNav } from "./(ui)/components/TopNav";
 
 // Night Watch type system: Fraunces (editorial serif — vigilance / institutional-watch signal)
 // for display, Familjen Grotesk for body. Chosen for meaning, not habit (style.config.md).
@@ -33,7 +34,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${displaySerif.variable} ${bodySans.variable}`}>
       <body>
-        <AppWalletProvider>{children}</AppWalletProvider>
+        <AppWalletProvider>
+          <TopNav />
+          {children}
+        </AppWalletProvider>
       </body>
     </html>
   );
