@@ -1,0 +1,10 @@
+# File: Anchor.toml
+[toolchain]
+anchor_version = "0.32.1"
+[programs.mainnet]
+holdline_vault = "4YSxGTVgKBca27gxkgZRK4GbxGm2afnBTya7mTLiSJcw"
+[provider]
+cluster = "mainnet"
+wallet = "~/.config/solana/id.json"
+[scripts]
+test = "yarn ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

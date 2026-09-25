@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # klend types come from the @kamino-finance/klend-sdk package, not a locally generated IDL,
+  # so there is no IDL-drift codegen job. Type safety is enforced by the SDK version pin.
+  typecheck-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci || npm install
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Offline unit tier (no live network)
+        run: npm test

@@ -1,0 +1,27 @@
+{
+  "name": "holdline",
+  "private": true,
+  "workspaces": ["core", "adapters/kamino", "keeper", "app"],
+  "scripts": {
+    "keeper": "ts-node keeper/src/index.ts",
+    "seed": "ts-node scripts/seed-demo.ts",
+    "verify": "ts-node scripts/verify-claims.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run tests/unit tests/integration --exclude '**/*.live.ts'",
+    "test:core": "vitest run core",
+    "test:live": "vitest run '**/*.live.ts'",
+    "check": "npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@kamino-finance/klend-sdk": "7.3.22",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
