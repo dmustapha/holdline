@@ -88,7 +88,7 @@ npm test                       # 18/18 core: LTV trigger math, market-hours, tri
 cd app
 npm install
 npm run test:teeth             # 34/34 design: token-drift, forbidden-defaults, WCAG contrast >= 4.5:1
-npm run build                  # Next.js production build, 8 routes
+npm run build                  # Next.js production build, 9 routes
 ```
 
 > Every command above passes from a clean clone with no extra flags and no keys.

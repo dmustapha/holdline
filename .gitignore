@@ -77,3 +77,16 @@ docs/context/
 DEMO-SCRIPT.md
 DEMO-FOOTGUNS.md
 HOSTING-RESEARCH.md
+
+# demo capture assets — never commit (bloat + provenance)
+video/
+*.mp4
+*.mov
+*.gif
+
+# submission working doc (local only)
+SUBMISSION.md
+
+# deploy env backups — NEVER commit (funds-key leak)
+.env*.bak*
+*.bak.deploy
