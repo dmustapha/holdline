@@ -15,6 +15,14 @@
 
 > Don't get liquidated in your sleep.
 
+## Demo
+
+[![Holdline demo: watch the keeper repay an overnight liquidation on its own](https://img.youtube.com/vi/ew1HLIt3rP8/maxresdefault.jpg)](https://youtu.be/ew1HLIt3rP8)
+
+**Watch (44s):** https://youtu.be/ew1HLIt3rP8
+
+You trigger the overnight gap, then do nothing. The keeper repays the loan on its own, the health bar drops red to green, and on-chain it is one signer (the keeper) in a single atomic release + repay. Your key never touches it.
+
 ## What is Holdline?
 
 Tokenized stocks (xStocks) trade 24/7 on Solana, but the underlying equities do not. When Wall Street is closed, an xStock price can gap on thin weekend liquidity while you are asleep, push your Kamino loan past its liquidation threshold, and get you liquidated before you ever see it.

@@ -3,7 +3,7 @@
 
 > Borrow against your tokenized stocks on Kamino and never get liquidated in your sleep.
 
-**Live Demo:** repo clone-run (boot the mainnet fork + keeper) | **Demo Video:** `submission/demo-video.mp4` (YouTube link added when uploaded) | **GitHub:** https://github.com/dmustapha/holdline
+**Live Demo:** repo clone-run (boot the mainnet fork + keeper) | **Demo Video:** https://youtu.be/ew1HLIt3rP8 (44s) | **GitHub:** https://github.com/dmustapha/holdline
 
 ---
 

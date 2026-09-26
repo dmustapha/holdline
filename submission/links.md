@@ -4,7 +4,7 @@
 ## Required
 - [x] GitHub: https://github.com/dmustapha/holdline (HTTP 200, public, MIT, provenance-clean)
 - [x] Live Demo: repo clone-run (judge boots the mainnet fork + keeper per the repo README). No always-on hosted URL; a Cloudflare quick tunnel served the demo during recording but rotates and dies on host sleep. Durable free host options are researched in `HOSTING-RESEARCH.md` and not stood up as the judging URL.
-- [ ] Demo Video: `submission/demo-video.mp4` (in-repo attachment, 44s, 1920x1080). Not on YouTube yet; the `.mp4` is gitignored, so attach it to the submission form or add a YouTube/attachment URL here when uploaded.
+- [x] Demo Video: https://youtu.be/ew1HLIt3rP8 (HTTP 303, YouTube, 44s, 1920x1080). Embedded in the repo README `## Demo`; `submission/demo-video.mp4` is the in-repo copy.
 
 ## Contract / Program Addresses (Solana)
 Pinned on a $0 local mainnet fork (real Kamino + xStocks state cloned from mainnet). No public explorer link: the proof runs on a fork by design, so these are not on public solscan. Same program deploys to mainnet unchanged.
@@ -15,5 +15,5 @@ Pinned on a $0 local mainnet fork (real Kamino + xStocks state cloned from mainn
 - xStocks lending market: `5wJeMrUYECGq41fxRESKALVcHnNX26TAWy4W98yULsua`
 
 ## Verification Status
-Required links verified: 1/1 HTTP-checkable (GitHub 200). Live demo is clone-run (no URL to check); demo video is an in-repo attachment (YouTube pending).
-Last verified: 2026-09-25T21:04:24Z
+Required links verified: 2/2 HTTP-checkable (GitHub 200, YouTube 303). Live demo is clone-run (no URL to check).
+Last verified: 2026-09-26T00:20:00Z
