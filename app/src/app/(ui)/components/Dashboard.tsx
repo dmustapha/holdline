@@ -15,6 +15,7 @@ import { ArmProtectModal } from "./ArmProtectModal";
 import { ProtectStatusCard } from "./ProtectStatusCard";
 import { DemoControls } from "./DemoControls";
 import { KeeperLivenessStrip } from "./KeeperLivenessStrip";
+import { WaitlistHook } from "./WaitlistHook";
 import {
   fetchMarket,
   fetchProtectStatus,
@@ -208,6 +209,9 @@ export function Dashboard({ mode = "consumer" }: { mode?: "consumer" | "demo" })
           </p>
         )}
       </div>
+
+      {/* D4: gap-number one-liner + live waitlist count + real email submit (traction surface). */}
+      <WaitlistHook />
 
       {/* E-3: always-visible keeper liveness — OFFLINE stays loud even if status/market calls fail */}
       <KeeperLivenessStrip keeper={keeper} error={keeperErr} />

@@ -87,3 +87,12 @@ export function buildArm(params: {
     reserveUsdc: string;
   }>("/api/protect/arm", params);
 }
+
+// Waitlist (D4): the live demand-signal count + a real POST submit. The file IS the datastore.
+export function fetchWaitlistCount() {
+  return get<{ count: number }>("/api/waitlist");
+}
+
+export function joinWaitlist(params: { email: string; borrowsToday: boolean; venue: string }) {
+  return post<{ ok: true; count: number; duplicate: boolean }>("/api/waitlist", params);
+}
