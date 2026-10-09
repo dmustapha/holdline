@@ -1,9 +1,16 @@
 {
   "name": "holdline",
   "private": true,
-  "workspaces": ["core", "adapters/kamino", "keeper"],
+  "workspaces": [
+    "core",
+    "adapters/kamino",
+    "keeper"
+  ],
   "scripts": {
     "keeper": "ts-node keeper/src/index.ts",
+    "prove": "bash scripts/prove-offline.sh",
+    "prove:save": "bash scripts/prove-offline.sh save",
+    "prove:capture": "ts-node scripts/capture-fixtures.ts",
     "seed": "ts-node scripts/seed-demo.ts",
     "verify": "ts-node scripts/verify-claims.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -16,6 +23,7 @@
     "@coral-xyz/anchor": "^0.32.1",
     "@kamino-finance/klend-sdk": "7.3.22",
     "@solana/web3.js": "^1.95.0",
+    "@solendprotocol/solend-sdk": "0.14.27",
     "bs58": "^5.0.0"
   },
   "devDependencies": {

@@ -16,6 +16,7 @@ import { fireReleaseRepayTopLevel } from "./fire-toplevel";
 import { detect } from "./detect";
 import { CFG, loadArmedVaults, type ArmedVault } from "./config";
 import { appendTick, appendFire, writeHeartbeat, type HeartbeatTick } from "./autonomy-log";
+import { appendSave } from "./saves-ledger";
 
 // Process one vault end-to-end: detect -> (maybe) fire -> re-read -> log. Isolated per vault.
 async function processVault(
@@ -52,6 +53,20 @@ async function processVault(
   const ltvAfter = after.ltvBps;
 
   await appendFire({ ts: nowSec(), sig, ltvBefore, ltvAfter });
+
+  // Saves ledger (ARCH §3.5): append ONE row ONLY now — fireReleaseRepayTopLevel threw on any
+  // revert/timeout, so reaching here means the atomic release+repay confirmed on-chain. A row cannot
+  // exist without a confirmed sig (INVARIANT #6 "demo state earned"). Live keeper => source "mainnet".
+  appendSave({
+    ts: nowSec(),
+    market: "kamino",
+    obligation: v.obligation,
+    ltvBefore,
+    ltvAfter: ltvAfter ?? ltvBefore,
+    repaidUsdc: fired.amountUsdc,
+    sig,
+    source: "mainnet",
+  });
 
   // PARTIAL: still over trigger after firing => the reserve could not fully cover the gap.
   const partial = ltvAfter !== null && ltvAfter >= v.triggerLtvBps;

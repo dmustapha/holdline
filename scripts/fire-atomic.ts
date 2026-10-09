@@ -11,8 +11,12 @@ import { makeRpc, loadMarket } from "../adapters/kamino/src/market";
 import { fireReleaseRepayTopLevel, fireReleaseOnly } from "../keeper/src/fire-toplevel";
 import { detect } from "../keeper/src/detect";
 import { loadArmedVaults } from "../keeper/src/config";
+import { appendSave } from "../keeper/src/saves-ledger";
 
 const RPC = process.env.RPC_URL ?? "http://127.0.0.1:8899";
+// Ledger market label: "save" when proving the Save adapter (prove:save), else "kamino" (ARCH §3.5).
+const SAVE_SOURCE = (process.env.PROVE_SOURCE as "fork" | "mainnet" | undefined) ?? "fork";
+const SAVE_MARKET = process.env.PROVE_MARKET === "save" ? "save" : "kamino";
 
 function loadKp(file: string): Keypair {
   return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(file, "utf8")) as number[]));
@@ -60,6 +64,20 @@ async function main(): Promise<void> {
   const afterMarket = await loadMarket(rpc);
   const after = await detect(afterMarket, afterSlot, v);
   console.log(`[fire] LTV before=${ltvBefore} bps  after=${after.ltvBps} bps  trigger=${v.triggerLtvBps} bps  repaid=${res.amountUsdc} USDC`);
+
+  // Append ONE ledger row — ONLY now, after the atomic tx confirmed (res.repaySig is a confirmed sig;
+  // fireReleaseRepayTopLevel throws on revert/timeout, so reaching here means on-chain success).
+  appendSave({
+    ts: Math.floor(Date.now() / 1000),
+    market: SAVE_MARKET,
+    obligation: v.obligation,
+    ltvBefore: ltvBefore ?? 0,
+    ltvAfter: after.ltvBps ?? (ltvBefore ?? 0),
+    repaidUsdc: res.amountUsdc,
+    sig: res.repaySig,
+    source: SAVE_SOURCE,
+  });
+  console.log(`[fire] saves.jsonl row appended (sig=${res.repaySig})`);
 }
 
 main().catch((e) => { console.error(`[fire] aborted: ${e instanceof Error ? e.message : String(e)}`); process.exit(1); });
