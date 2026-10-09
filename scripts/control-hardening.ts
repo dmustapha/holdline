@@ -71,7 +71,75 @@ async function expectRevert(conn: Connection, keeper: Keypair, label: string, ix
   }
 }
 
+const SAVE_MARKET = process.env.PROVE_MARKET === "save";
+
+// Save repay identity: single u8 tag 11, declared u64 LE amount @ 1, obligation @ account idx 3.
+function isSaveRepay(ix: TransactionInstruction): boolean {
+  return ix.programId.toString() === "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo" && ix.data[0] === 11;
+}
+function patchSaveRepayAmount(ixs: TransactionInstruction[], value: bigint): TransactionInstruction[] {
+  return ixs.map((ix) => {
+    if (!isSaveRepay(ix)) return ix;
+    const data = Buffer.from(ix.data);
+    data.writeBigUInt64LE(value, 1); // Save: amount at data offset 1 (markets.rs is_repay -> Some(1))
+    return { ...ix, data } as TransactionInstruction;
+  });
+}
+function patchSaveRepayObligation(ixs: TransactionInstruction[], decoy: PublicKey): TransactionInstruction[] {
+  return ixs.map((ix) => {
+    if (!isSaveRepay(ix)) return ix;
+    const keys = ix.keys.map((k, i) => (i === 3 ? { ...k, pubkey: decoy } : k)); // Save obligation @ idx 3
+    return { ...ix, keys } as TransactionInstruction;
+  });
+}
+
+async function mainSave(): Promise<void> {
+  const keeper = loadKp(process.env.KEEPER_KEYPAIR ?? `${process.env.HOME}/.config/solana/holdline-keeper.json`);
+  const conn = new Connection(RPC, "confirmed");
+  const seed = JSON.parse(readFileSync(path.join(__dirname, "seed-result.json"), "utf8")) as { vault: string; obligation: string; repayReserve: string };
+  const vaults = await loadArmedVaults(conn);
+  const v = vaults.find((x) => x.vault === seed.vault);
+  if (!v) throw new Error(`armed vault ${seed.vault} not found on fork`);
+
+  const { SaveAdapter } = await import("../adapters/save/src/adapter");
+  const { buildReleaseIx } = await import("../keeper/src/fire-toplevel");
+  const adapter = new SaveAdapter(RPC, keeper.publicKey);
+  const amount = Math.min(1_000_000, v.capPerFire); // 1 USDC, capped
+  const releaseIx = await buildReleaseIx(conn, keeper, v, amount);
+  const repayIxs = (await adapter.buildRepayIxs({ obligation: v.obligation, sourceUsdc: "", amountBaseUnits: BigInt(amount) })) as TransactionInstruction[];
+  console.log(`[control-save] keeper=${keeper.publicKey.toString()} vault=${v.vault} amount=${amount / 1e6} USDC`);
+
+  // CONTROL B — two releases, one repay -> MultipleReleases (6005).
+  await expectRevert(conn, keeper, "B double-release skim (Save)", [releaseIx, releaseIx, ...repayIxs], "MultipleReleases");
+  // CONTROL C1 — repay-all sentinel u64::MAX -> RepayNotEnforced (6004).
+  await expectRevert(conn, keeper, "C1 repay-all sentinel (Save)", [releaseIx, ...patchSaveRepayAmount(repayIxs, (1n << 64n) - 1n)], "RepayNotEnforced");
+  // CONTROL C2 — inexact declared amount -> RepayNotEnforced (6004).
+  await expectRevert(conn, keeper, "C2 inexact amount (Save)", [releaseIx, ...patchSaveRepayAmount(repayIxs, BigInt(amount - 1))], "RepayNotEnforced");
+  // CONTROL A — release-only, no repay -> RepayNotEnforced (6004).
+  await expectRevert(conn, keeper, "A release-only (Save)", [releaseIx], "RepayNotEnforced");
+  // CONTROL E — DIVERT to a non-bound obligation -> RepayNotEnforced (6004).
+  await expectRevert(conn, keeper, "E non-bound obligation (Save)", [releaseIx, ...patchSaveRepayObligation(repayIxs, Keypair.generate().publicKey)], "RepayNotEnforced");
+
+  // CONTROL D — over-release beyond live Save debt -> OverReleaseBeyondDebt (6006). Read live debt the
+  // SAME way the on-chain cap does (SaveAdapter.reserveDebt == markets.rs read_debt_save), release
+  // debt+1 USDC with an exact-matching repay. cap_per_fire was seeded ABOVE debt so this EXERCISES.
+  const debt = Number(await adapter.reserveDebt(v.obligation, seed.repayReserve));
+  const over = debt + 1_000_000;
+  if (over <= v.capPerFire) {
+    const releaseIxD = await buildReleaseIx(conn, keeper, v, over);
+    const repayIxsD = patchSaveRepayAmount(
+      (await adapter.buildRepayIxs({ obligation: v.obligation, sourceUsdc: "", amountBaseUnits: BigInt(over) })) as TransactionInstruction[],
+      BigInt(over),
+    );
+    await expectRevert(conn, keeper, "D over-release beyond debt (Save)", [releaseIxD, ...repayIxsD], "OverReleaseBeyondDebt");
+  } else {
+    console.log(`[control-save] SKIP D — cap_per_fire (${v.capPerFire / 1e6}) <= debt+1 (${over / 1e6}); re-seed higher.`);
+  }
+  console.log("\n[control-save] ALL HARDENING CONTROLS PASSED (Save path) — incl. live-debt cap (6006).");
+}
+
 async function main(): Promise<void> {
+  if (SAVE_MARKET) return mainSave();
   const keeper = loadKp(process.env.KEEPER_KEYPAIR ?? `${process.env.HOME}/.config/solana/holdline-keeper.json`);
   const conn = new Connection(RPC, "confirmed");
   const rpc = makeRpc(RPC);

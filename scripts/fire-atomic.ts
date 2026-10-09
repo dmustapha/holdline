@@ -8,7 +8,7 @@ import { Connection, Keypair } from "@solana/web3.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { makeRpc, loadMarket } from "../adapters/kamino/src/market";
-import { fireReleaseRepayTopLevel, fireReleaseOnly } from "../keeper/src/fire-toplevel";
+import { fireReleaseRepayTopLevel, fireReleaseOnly, fireSaveReleaseRepay } from "../keeper/src/fire-toplevel";
 import { detect } from "../keeper/src/detect";
 import { loadArmedVaults } from "../keeper/src/config";
 import { appendSave } from "../keeper/src/saves-ledger";
@@ -28,11 +28,30 @@ async function main(): Promise<void> {
   const conn = new Connection(RPC, "confirmed");
   const rpc = makeRpc(RPC);
 
-  const seed = JSON.parse(readFileSync(path.join(__dirname, "seed-result.json"), "utf8")) as { vault: string; obligation: string };
+  const seed = JSON.parse(readFileSync(path.join(__dirname, "seed-result.json"), "utf8")) as { vault: string; obligation: string; repayReserve?: string };
   const vaults = await loadArmedVaults(conn);
   const v = vaults.find((x) => x.vault === seed.vault);
   if (!v) throw new Error(`armed vault ${seed.vault} not found on fork`);
-  console.log(`[fire] keeper=${keeper.publicKey.toString()} vault=${v.vault} obligation=${v.obligation}`);
+  console.log(`[fire] keeper=${keeper.publicKey.toString()} vault=${v.vault} obligation=${v.obligation} market=${SAVE_MARKET}`);
+
+  // ── SAVE PATH (vault.market===1) ── clock-gated, debt-capped; no Kamino SDK. Reads live debt via the
+  // SaveAdapter (same bytes the on-chain cap reads), fires [release, refresh*, repay] atomically.
+  if (SAVE_MARKET === "save") {
+    const { SaveAdapter } = await import("../adapters/save/src/adapter");
+    const adapter = new SaveAdapter(RPC, keeper.publicKey);
+    const debtBefore = Number(await adapter.reserveDebt(v.obligation, seed.repayReserve!)) / 1e6;
+    const repayUi = Math.min(Math.max(debtBefore * 0.5, 0.1), v.capPerFire / 1e6);
+    console.log(`[fire] SAVE debtBefore=${debtBefore} USDC repayUi=${repayUi} USDC cap=${v.capPerFire / 1e6} USDC`);
+    const res = await fireSaveReleaseRepay(conn, keeper, v, repayUi);
+    const debtAfter = Number(await adapter.reserveDebt(v.obligation, seed.repayReserve!)) / 1e6;
+    console.log(`[fire] SAVE debt before=${debtBefore} after=${debtAfter} USDC repaid=${res.amountUsdc} USDC sig=${res.repaySig}`);
+    appendSave({
+      ts: Math.floor(Date.now() / 1000), market: "save", obligation: v.obligation,
+      ltvBefore: 0, ltvAfter: 0, repaidUsdc: res.amountUsdc, sig: res.repaySig, source: SAVE_SOURCE,
+    });
+    console.log(`[fire] saves.jsonl row appended (market=save sig=${res.repaySig})`);
+    return;
+  }
 
   const slot = await rpc.getSlot().send();
   const market = await loadMarket(rpc);

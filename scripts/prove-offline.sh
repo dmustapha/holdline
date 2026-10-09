@@ -18,7 +18,24 @@ rm -rf "$LEDGER"
 [[ -d "$ROOT/accounts" ]] || { echo "[prove] accounts/ fixtures missing — run npm run prove:capture first"; exit 1; }
 if lsof -ti:8899 >/dev/null 2>&1; then echo "[prove] port 8899 busy — aborting (no silent reuse)"; exit 1; fi
 
-solana-test-validator --reset --ledger "$LEDGER" --rpc-port 8899 --quiet \
+# Save (Solend) RefreshReserve computes interest over (current_slot - reserve.last_update.slot). The
+# cloned reserve carries a mainnet slot (~4.5e8); a fork booting at slot 0 underflows that subtraction
+# -> "Math operation overflow" (0xe). Warp the fork to the captured reserve's last_update slot so the
+# elapsed-slot math is small and valid. Kamino uses its own SDK scope refresh and needs no warp.
+WARP_FLAG=()
+if [[ "$MARKET" == save && -f "$ROOT/scripts/save-obligation.json" ]]; then
+  WARP_SLOT="$("$ROOT/node_modules/.bin/ts-node" -e '
+    const fs=require("fs");const r=require("@solendprotocol/solend-sdk/state/reserve");
+    const so=JSON.parse(fs.readFileSync("scripts/save-obligation.json","utf8"));
+    const j=JSON.parse(fs.readFileSync("accounts/"+so.repayReserve+".json","utf8"));
+    const p=r.parseReserve({toBase58:()=>"x"},{data:Buffer.from(j.account.data[0],"base64")});
+    process.stdout.write(p.info.lastUpdate.slot.toString());
+  ')"
+  echo "[prove] Save path — warping fork to reserve last_update slot $WARP_SLOT"
+  WARP_FLAG=(--warp-slot "$WARP_SLOT")
+fi
+
+solana-test-validator --reset --ledger "$LEDGER" --rpc-port 8899 --quiet "${WARP_FLAG[@]+"${WARP_FLAG[@]}"}" \
   --account-dir "$ROOT/accounts" \
   --upgradeable-program KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD "$ROOT/programs/klend.so" none \
   --upgradeable-program FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr "$ROOT/programs/farms.so" none \

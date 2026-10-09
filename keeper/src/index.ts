@@ -12,11 +12,40 @@
 // NOT RUN against mainnet here (no creds staged). The live fire is the hero gate.
 import { Connection, Keypair } from "@solana/web3.js";
 import { makeRpc, loadMarket } from "../../adapters/kamino/src/market";
-import { fireReleaseRepayTopLevel } from "./fire-toplevel";
+import { fireReleaseRepayTopLevel, fireSaveReleaseRepay } from "./fire-toplevel";
 import { detect } from "./detect";
+import { isClosed } from "../../core/src/market-hours";
 import { CFG, loadArmedVaults, type ArmedVault } from "./config";
 import { appendTick, appendFire, writeHeartbeat, type HeartbeatTick } from "./autonomy-log";
 import { appendSave } from "./saves-ledger";
+
+// Process a Save vault (market===1). Clock-gated (closed-hours only) + debt-capped on-chain; the
+// fire is [release, RefreshReserve, RefreshObligation, Repay] atomic (SaveAdapter). Mirrors the Kamino
+// per-vault contract (tick log + saves row only after a confirmed sig). Isolated by the caller's try/catch.
+async function processSaveVault(
+  conn: Connection,
+  keeper: Keypair,
+  v: ArmedVault,
+): Promise<{ fired: boolean; partial: boolean; ltvBps: number | null; shortfallUsdc: number | null }> {
+  const nowSec = () => Math.floor(Date.now() / 1000);
+  if (!isClosed(new Date())) {
+    await appendTick({ ts: nowSec(), obligation: v.obligation, ltvBps: null, marketClosed: false, decision: "skip-market-open" });
+    return { fired: false, partial: false, ltvBps: null, shortfallUsdc: null };
+  }
+  const { SaveAdapter } = await import("../../adapters/save/src/adapter");
+  const adapter = new SaveAdapter(conn.rpcEndpoint, keeper.publicKey);
+  const view = await adapter.readObligationView(v.obligation);
+  if (view.debtUsdc <= 0) {
+    await appendTick({ ts: nowSec(), obligation: v.obligation, ltvBps: null, marketClosed: true, decision: "hold" });
+    return { fired: false, partial: false, ltvBps: null, shortfallUsdc: null };
+  }
+  await appendTick({ ts: nowSec(), obligation: v.obligation, ltvBps: null, marketClosed: true, decision: "fire" });
+  const repayUi = Math.min(view.debtUsdc * 0.5, v.capPerFire / 1e6);
+  const res = await fireSaveReleaseRepay(conn, keeper, v, repayUi);
+  await appendFire({ ts: nowSec(), sig: res.repaySig, ltvBefore: 0, ltvAfter: 0 });
+  appendSave({ ts: nowSec(), market: "save", obligation: v.obligation, ltvBefore: 0, ltvAfter: 0, repaidUsdc: res.amountUsdc, sig: res.repaySig, source: "mainnet" });
+  return { fired: true, partial: false, ltvBps: null, shortfallUsdc: null };
+}
 
 // Process one vault end-to-end: detect -> (maybe) fire -> re-read -> log. Isolated per vault.
 async function processVault(
@@ -25,6 +54,10 @@ async function processVault(
   rpc: ReturnType<typeof makeRpc>,
   v: ArmedVault
 ): Promise<{ fired: boolean; partial: boolean; ltvBps: number | null; shortfallUsdc: number | null }> {
+  // D2.4 adapter selection: Save vaults (market===1) take the Save fire path, still inside this same
+  // per-vault try/catch (isolation unchanged). The closed-hours gate (INVARIANT #4/#6) still applies.
+  if (v.market === 1) return processSaveVault(conn, keeper, v);
+
   const slot = await rpc.getSlot().send();
   const market = await loadMarket(rpc);
   const d = await detect(market, slot, v);

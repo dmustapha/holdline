@@ -139,6 +139,34 @@ export async function fireReleaseRepayTopLevel(
   return { releaseSig: sig, repaySig: sig, amountUsdc: amount / USDC_FACTOR };
 }
 
+// [D2.4 SAVE FIRE] Atomic Save save: [release_to_keeper, RefreshReserve, RefreshObligation,
+// RepayObligationLiquidity] in one keeper-signed tx. Mirrors fireReleaseRepayTopLevel but builds the
+// Save repay ixs via the SaveAdapter (vault.market===1). The ORDER is identical and load-bearing:
+// release FIRST (its post-ix scan sees the Save repay later), then Save's refresh ixs, then the repay
+// (Solend requires fresh reserve+obligation before repay). Keeper is the only signer; user never signs.
+export async function fireSaveReleaseRepay(
+  conn: Connection,
+  keeper: Keypair,
+  v: ArmedVault,
+  repayUiUsdc: number,
+): Promise<{ releaseSig: string; repaySig: string; amountUsdc: number }> {
+  const { SaveAdapter } = await import("../../adapters/save/src/adapter");
+  const amount = toRepayLamports(repayUiUsdc, v.capPerFire);
+  if (amount <= 0) throw new Error("computed repay amount is zero");
+
+  const adapter = new SaveAdapter(conn.rpcEndpoint, keeper.publicKey);
+  const releaseIx = await buildReleaseIx(conn, keeper, v, amount);
+  const repayIxs = (await adapter.buildRepayIxs({
+    obligation: v.obligation,
+    sourceUsdc: getAssociatedTokenAddressSync(USDC_MINT_W3, keeper.publicKey).toString(),
+    amountBaseUnits: BigInt(amount),
+  })) as TransactionInstruction[];
+
+  const sig = await sendKeeperTx(conn, keeper, [releaseIx, ...repayIxs]);
+  console.log(`[holdline] ProtectFired (ATOMIC Save release+repay) vault=${v.vault} amount=${amount} sig=${sig}`);
+  return { releaseSig: sig, repaySig: sig, amountUsdc: amount / USDC_FACTOR };
+}
+
 // [POSITIVE CONTROL] Send ONLY the release_to_keeper ix (no following klend
 // repay in the tx). This MUST fail with VaultError::RepayNotEnforced — proving the atomic enforcement
 // is real, not decorative. Returns the sig on the (unexpected) success path; throws on the expected fail.

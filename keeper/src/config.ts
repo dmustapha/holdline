@@ -25,6 +25,7 @@ export interface ArmedVault {
   safeBufferBps: number;
   debtUsdc: number;
   collateralUsdc: number;
+  market: number; // 0 = Kamino, 1 = Save (D2.4 — selects the adapter)
 }
 
 // Safe-buffer target LTV the repay should bring the obligation down to (bps). Fixed policy input.
@@ -65,6 +66,7 @@ export function decodeVaultState(pubkey: PublicKey, data: Buffer): ArmedVault {
     keeper: PublicKey;
     trigger_ltv_bps: number;
     cap_per_fire: BN;
+    market: number;
   };
   const [reserveUsdc] = PublicKey.findProgramAddressSync(
     [Buffer.from("reserve"), pubkey.toBuffer()],
@@ -86,6 +88,7 @@ export function decodeVaultState(pubkey: PublicKey, data: Buffer): ArmedVault {
     safeBufferBps: SAFE_BUFFER_BPS,
     debtUsdc: 0,
     collateralUsdc: 0,
+    market: s.market ?? 0,
   };
 }
 

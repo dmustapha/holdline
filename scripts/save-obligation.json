@@ -1,0 +1,11 @@
+{
+  "market": "save",
+  "obligation": "1GdBG1Knr6Cp4GDRA1o3xb7823GPTwoJzuNBBZdNCCN",
+  "owner": "FzFXLzS1NQxeApE13BPdWaiNECjdjKv1Q7n1Q4NRiPsZ",
+  "lendingMarket": "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY",
+  "repayReserve": "BgxfHJDzm44T7XG68MYKx7YisTjZu73tVovyZSjJMpmw",
+  "debtBaseUnits": "1398716",
+  "borrowReserves": [
+    "BgxfHJDzm44T7XG68MYKx7YisTjZu73tVovyZSjJMpmw"
+  ]
+}
