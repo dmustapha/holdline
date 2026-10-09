@@ -1,0 +1,5 @@
+{"schema":"feature-coverage/1","phase":"D3","phase_builds_ui":true,"slice":[
+ {"id":"lie-detector-panel","surface":"app/src/app/(ui)/components/LieDetector.tsx#LieDetector via /demo","reachable":true},
+ {"id":"lie-detector-api","surface":"app/src/app/api/demo/lie-detector/route.ts","reachable":true},
+ {"id":"lie-detector-503-empty-state","surface":"LieDetector.tsx proof-not-attached state","reachable":true}
+],"verdict":"PASS","redispatch_count":0,"ts":"2026-10-09T00:00:00Z"}

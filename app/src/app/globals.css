@@ -669,3 +669,182 @@ details.hl-disc .hl-disc-body {
   .hl-nav-word { display: none; }
   .hl-nav-inner { gap: 8px; }
 }
+
+/* ── D3 Lie Detector panel ──────────────────────────────────────────────────
+   Custody proof surface. Tokenized throughout; signal-light verdicts (RED caught /
+   GREEN legit / amber leak). Rows are 2-level elevation chips over the card, with
+   hover lift + focus-visible parity carried from the shared vocabulary. */
+.hl-lie-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.hl-lie-verdict {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  padding: 5px 11px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+.hl-lie-verdict.is-caught {
+  color: var(--safe);
+  background: var(--safe-soft);
+  box-shadow: 0 0 0 1px rgba(53, 214, 164, 0.3) inset;
+}
+.hl-lie-verdict.is-leaked {
+  color: var(--danger);
+  background: var(--danger-soft);
+  box-shadow: 0 0 0 1px rgba(255, 92, 108, 0.35) inset;
+}
+.hl-lie-lede {
+  color: var(--text-mid);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+.hl-lie-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hl-lie-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-hair);
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
+  box-shadow: var(--elev-1);
+  transition: transform 0.16s ease, box-shadow 0.2s ease;
+}
+.hl-lie-row:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--elev-2);
+}
+.hl-lie-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-full);
+}
+.hl-lie-row.is-red .hl-lie-dot {
+  background: var(--danger);
+  box-shadow: 0 0 10px rgba(255, 92, 108, 0.6);
+}
+.hl-lie-row.is-green .hl-lie-dot {
+  background: var(--safe);
+  box-shadow: 0 0 10px rgba(53, 214, 164, 0.6);
+}
+.hl-lie-row.is-leak .hl-lie-dot {
+  background: var(--warn);
+  box-shadow: 0 0 10px rgba(245, 184, 65, 0.6);
+}
+.hl-lie-row.is-green {
+  border-color: rgba(53, 214, 164, 0.3);
+}
+.hl-lie-row.is-leak {
+  border-color: rgba(245, 184, 65, 0.4);
+}
+.hl-lie-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hl-lie-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hl-lie-ctrl {
+  color: var(--text-hi);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.hl-lie-market {
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--moon);
+  background: var(--moon-12);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.hl-lie-attempt {
+  color: var(--text-low);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.hl-lie-verdict-cell {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+.hl-lie-tag {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+}
+.hl-lie-tag.is-red {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.hl-lie-tag.is-green {
+  color: var(--safe);
+  background: var(--safe-soft);
+}
+.hl-lie-tag.is-leak {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.hl-lie-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.74rem;
+  color: var(--text-mid);
+  font-variant-numeric: tabular-nums;
+}
+.hl-lie-empty {
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  background: var(--surface-1);
+}
+.hl-lie-empty-title {
+  color: var(--text-hi);
+  font-weight: 600;
+  font-size: 1.02rem;
+  margin: 0 0 8px;
+}
+.hl-lie-empty code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  color: var(--moon);
+  background: var(--moon-12);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+@media (max-width: 560px) {
+  .hl-lie-row {
+    flex-wrap: wrap;
+  }
+  .hl-lie-verdict-cell {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    padding-left: 23px;
+  }
+}
