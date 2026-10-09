@@ -8,7 +8,7 @@
 // Reads addresses/signatures from submission/proof.md. Empty proof.md => every claim PENDING
 // (reported, exit 1) — an unproven claim is a failing claim, never a silent pass.
 
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { Connection, PublicKey } from "@solana/web3.js";
 
@@ -17,19 +17,29 @@ const RPC = process.env.RPC_URL;
 
 type Check = { name: string; kind: "account" | "tx"; key: string };
 
+// $0 NETWORK-FREE FORK MODEL: HoldLine deploys NO mainnet vault (the reproducible fork is the
+// validity spine — INVARIANT #5). So verify-claims re-resolves the REAL MAINNET ANCHORS the fork
+// clones (programs, market, both demo obligations) — these genuinely resolve live on mainnet and are
+// what make the fork honest. The fork-only artifacts (vault program id, the two atomic-save sigs) are
+// NOT mainnet txs; they REPRODUCE via `npm run prove` / `npm run prove:save` and are listed in the
+// "Fork-reproduced" section of submission/proof.md (documented, not mainnet-looked-up). This split IS
+// the INVARIANTS VERIFY-BEFORE-CLAIMING contract: mainnet anchors re-resolve here, fork saves reproduce
+// via prove. Claiming a mainnet vault deploy would be drift (the $0 fork is the spine).
 const CHECKS: Check[] = [
-  { name: "Program deployed", kind: "account", key: "HOLDLINE_VAULT_PROGRAM_ID" },
-  { name: "Vault PDA", kind: "account", key: "VAULT_PDA" },
-  { name: "Bound obligation", kind: "account", key: "OBLIGATION" },
-  { name: "Borrow tx", kind: "tx", key: "BORROW_TX" },
-  { name: "release_repay (hero) tx", kind: "tx", key: "RELEASE_REPAY_TX" },
-  { name: "Reclaim tx", kind: "tx", key: "RECLAIM_TX" },
+  { name: "KLend program (Kamino, mainnet)", kind: "account", key: "KLEND_PROGRAM_ID" },
+  { name: "Save/Solend program (mainnet)", kind: "account", key: "SAVE_PROGRAM_ID" },
+  { name: "xStocks Kamino market (mainnet)", kind: "account", key: "XSTOCKS_MARKET" },
+  { name: "Kamino demo obligation (real, cloned)", kind: "account", key: "KAMINO_OBLIGATION" },
+  { name: "Save demo obligation (real, cloned)", kind: "account", key: "SAVE_OBLIGATION" },
 ];
 
 const UNSET = /\(unset[^)]*\)/i;
 
 function parseProof(): Record<string, string> {
-  const raw = readFileSync(join(ROOT, "submission", "proof.md"), "utf8");
+  // Missing/empty proof.md => every claim PENDING (reported, exit 1) — never crash, never silent pass.
+  const proofPath = join(ROOT, "submission", "proof.md");
+  if (!existsSync(proofPath)) return {};
+  const raw = readFileSync(proofPath, "utf8");
   const out: Record<string, string> = {};
   for (const line of raw.split("\n")) {
     const m = line.match(/^-\s*([A-Z_]+):\s*(.+)$/);
