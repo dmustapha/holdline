@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 declare_id!("4YSxGTVgKBca27gxkgZRK4GbxGm2afnBTya7mTLiSJcw");
 pub mod state;
 pub mod errors;
+pub mod markets;
 pub mod instructions;
 use instructions::*;
 use anchor_lang::solana_program::pubkey;
@@ -21,8 +22,8 @@ pub struct ProtectFired {
 #[program]
 pub mod holdline_vault {
     use super::*;
-    pub fn init_vault(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64, keeper: Pubkey) -> Result<()> {
-        instructions::init_vault::handler(ctx, trigger_ltv_bps, cap_per_fire, keeper)
+    pub fn init_vault(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64, keeper: Pubkey, market: u8) -> Result<()> {
+        instructions::init_vault::handler(ctx, trigger_ltv_bps, cap_per_fire, keeper, market)
     }
     pub fn fund_reserve(ctx: Context<FundReserve>, amount: u64) -> Result<()> {
         instructions::fund_reserve::handler(ctx, amount)

@@ -14,40 +14,22 @@
 //   - Destination MUST be a USDC account owned by the keeper — no other target is representable.
 //   - A bound-obligation repay MUST follow later in the same tx (INVARIANT #2: structural custody).
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey;
 use anchor_lang::solana_program::sysvar::instructions::{
     self as sysvar_instructions, load_current_index_checked, load_instruction_at_checked,
 };
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::state::VaultState;
 use crate::errors::VaultError;
+use crate::markets::{self, Market};
 
-// KLend program (Kamino lending) — mainnet.
-pub const KLEND_PROGRAM_ID: Pubkey = pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
-// Anchor discriminators = sha256("global:<name>")[..8].
-const REPAY_DISCRIMINATOR: [u8; 8] = [145, 178, 13, 225, 76, 240, 147, 72];
-const REPAY_V2_DISCRIMINATOR: [u8; 8] = [116, 174, 213, 76, 180, 53, 210, 144];
 // This instruction's own discriminator = sha256("global:release_to_keeper")[..8] — used to reject a
 // tx that contains MORE THAN ONE release_to_keeper (each would otherwise satisfy the SAME repay ->
 // double-release skim). Enforcing exactly one release per tx makes the 1-release:1-repay binding hold.
+// MARKET-AGNOSTIC: the self discriminator is this program's, identical for Kamino and Save vaults.
 const SELF_DISCRIMINATOR: [u8; 8] = [137, 255, 182, 63, 197, 97, 237, 238];
-// Fixed positions in the (flattened) klend repay account list — identical for V1 and V2's first 9.
-const OBLIGATION_IX_INDEX: usize = 1;
-const REPAY_RESERVE_IX_INDEX: usize = 3;
-const USER_SOURCE_LIQUIDITY_IX_INDEX: usize = 6;
-
-// klend Obligation zero-copy layout (from klend-sdk dist/idl/klend.json, cross-checked live on the
-// fork against KaminoObligation debt). Account data = 8-byte anchor discriminator + fields:
-//   tag u64(8) · LastUpdate(16) · lendingMarket(32) · owner(32) · deposits[8]×ObligationCollateral(136)
-//   · lowestReserveDepositLiquidationLtv u64(8) · depositedValueSf u128(16) → borrows[5]×ObligationLiquidity(200).
-// Each ObligationLiquidity: borrowReserve(32) · cumulativeBorrowRateBsf BigFractionBytes(48) ·
-//   firstBorrowedAtTimestamp u64(8) · borrowedAmountSf u128(16) · … → borrowedAmountSf at +88.
-// borrowedAmountSf is a klend Fraction (2^60-scaled): debt_lamports = sf >> 60.
-const OBLIG_BORROWS_OFFSET: usize = 1208;
-const OBLIG_BORROW_STRIDE: usize = 200;
-const OBLIG_BORROWED_AMOUNT_SF_OFFSET: usize = 88;
-const OBLIG_NUM_BORROWS: usize = 5;
-const FRACTION_SHIFT: u32 = 60;
+// Per-market repay account indices and debt layout now live in markets.rs (§4.3): the identity match,
+// the debt read, and the obligation-owner program id all select on vault.market. The single-release,
+// exact-amount, and ≤live-debt guarantees below are UNCHANGED and market-agnostic (INVARIANT #2).
 
 #[derive(Accounts)]
 pub struct ReleaseToKeeper<'info> {
@@ -69,9 +51,11 @@ pub struct ReleaseToKeeper<'info> {
     /// CHECK: Instructions sysvar — introspected to enforce the atomic bound-obligation repay.
     #[account(address = sysvar_instructions::ID @ VaultError::ScopeViolation)]
     pub instructions: UncheckedAccount<'info>,
-    /// CHECK: the bound klend obligation — must equal vault.obligation and be klend-owned; read
-    /// (never written) to cap the release at the reserve's live debt (full custody closure).
-    #[account(address = vault.obligation @ VaultError::ScopeViolation, owner = KLEND_PROGRAM_ID @ VaultError::BadObligation)]
+    /// CHECK: the bound lending-market obligation — must equal vault.obligation; its OWNER program is
+    /// checked against the bound market's program id in the handler (market-agnostic — Kamino or Save;
+    /// a dynamic `owner =` constraint is not expressible, so the check lives in enforce_bound_repay).
+    /// Read (never written) to cap the release at the reserve's live debt (full custody closure).
+    #[account(address = vault.obligation @ VaultError::ScopeViolation)]
     pub obligation: UncheckedAccount<'info>,
 }
 
@@ -113,6 +97,17 @@ pub fn handler(ctx: Context<ReleaseToKeeper>, amount: u64) -> Result<()> {
 }
 
 fn enforce_bound_repay(ctx: &Context<ReleaseToKeeper>, amount: u64) -> Result<()> {
+    // Select the bound market's descriptor (0 = Kamino, 1 = Save). The single-release / exact-amount /
+    // ≤live-debt guarantees below are market-agnostic; only the repay-identity match, account indices,
+    // owner program id, and debt-read layout select on `market` (INVARIANT #2 — must not weaken).
+    let market = Market::from_u8(ctx.accounts.vault.market).ok_or(VaultError::BadObligation)?;
+    // Market-agnostic obligation-owner check (replaces the former hardcoded `owner = KLEND_PROGRAM_ID`
+    // account constraint): the bound obligation MUST be owned by the bound market's program.
+    require!(
+        ctx.accounts.obligation.owner == &market.program_id(),
+        VaultError::BadObligation
+    );
+
     let ixs = &ctx.accounts.instructions.to_account_info();
     let obligation = ctx.accounts.vault.obligation;
     let keeper_usdc = ctx.accounts.keeper_usdc.key();
@@ -132,8 +127,8 @@ fn enforce_bound_repay(ctx: &Context<ReleaseToKeeper>, amount: u64) -> Result<()
         if is_self_release(&ix) {
             self_count += 1;
         }
-        if i > current && repay_reserve.is_none() && is_bound_repay(&ix, &obligation, &keeper_usdc, amount) {
-            repay_reserve = ix.accounts.get(REPAY_RESERVE_IX_INDEX).map(|m| m.pubkey);
+        if i > current && repay_reserve.is_none() && is_bound_repay(&ix, &obligation, &keeper_usdc, amount, market) {
+            repay_reserve = ix.accounts.get(market.repay_reserve_ix_index()).map(|m| m.pubkey);
         }
         i += 1;
     }
@@ -144,31 +139,12 @@ fn enforce_bound_repay(ctx: &Context<ReleaseToKeeper>, amount: u64) -> Result<()
     // pulls only the actual outstanding debt, so without this a keeper could release more than owed
     // (exact-matching the declared repay) and pocket the surplus. Reading debt pre-repay = the max
     // legitimately repayable; require amount <= it.
-    let debt = obligation_debt_for_reserve(&ctx.accounts.obligation.to_account_info(), &reserve)?;
+    // Live-debt read delegates to the per-market layout in markets.rs (Kamino Fraction >>60 vs Save
+    // WAD /1e18). The ≤live-debt cap itself is identical across markets (INVARIANT #2).
+    let data = ctx.accounts.obligation.try_borrow_data()?;
+    let debt = markets::obligation_debt_for_reserve(market, &data, &reserve)?;
     require!(amount <= debt, VaultError::OverReleaseBeyondDebt);
     Ok(())
-}
-
-// Read the bound obligation's live borrowed debt (in token lamports) for `reserve` from its zero-copy
-// account data. Returns 0 if the reserve is not among the obligation's borrows (→ any nonzero release
-// is rejected). Fails closed on a too-small/unreadable account.
-fn obligation_debt_for_reserve(obligation_ai: &AccountInfo, reserve: &Pubkey) -> Result<u64> {
-    let data = obligation_ai.try_borrow_data()?;
-    let min_len = OBLIG_BORROWS_OFFSET + OBLIG_NUM_BORROWS * OBLIG_BORROW_STRIDE;
-    require!(data.len() >= min_len, VaultError::BadObligation);
-    for slot in 0..OBLIG_NUM_BORROWS {
-        let base = OBLIG_BORROWS_OFFSET + slot * OBLIG_BORROW_STRIDE;
-        let rk = Pubkey::try_from(&data[base..base + 32]).map_err(|_| VaultError::BadObligation)?;
-        if &rk != reserve {
-            continue;
-        }
-        let amt_at = base + OBLIG_BORROWED_AMOUNT_SF_OFFSET;
-        let mut le = [0u8; 16];
-        le.copy_from_slice(&data[amt_at..amt_at + 16]);
-        let sf = u128::from_le_bytes(le);
-        return Ok((sf >> FRACTION_SHIFT) as u64);
-    }
-    Ok(0)
 }
 
 // True if `ix` is another invocation of THIS program's release_to_keeper (by program id + discriminator).
@@ -188,32 +164,37 @@ fn is_bound_repay(
     obligation: &Pubkey,
     keeper_usdc: &Pubkey,
     amount: u64,
+    market: Market,
 ) -> bool {
-    if ix.program_id != KLEND_PROGRAM_ID {
+    // Program id of the bound market (Kamino KLend or Save/Solend).
+    if ix.program_id != market.program_id() {
         return false;
     }
-    if ix.data.len() < 16 {
-        return false;
-    }
-    let disc = &ix.data[..8];
-    if disc != REPAY_DISCRIMINATOR && disc != REPAY_V2_DISCRIMINATOR {
+    // Per-market repay-identity match: Kamino = 8-byte anchor discriminator (V1/V2), declared u64 LE
+    // amount @ 8; Save = single u8 tag 11, declared u64 LE amount @ 1. `is_repay` returns the amount
+    // offset on match, else None.
+    let amt_off = match market.is_repay(&ix.data) {
+        Some(off) => off,
+        None => return false,
+    };
+    if ix.data.len() < amt_off + 8 {
         return false;
     }
     let obligation_ok = ix
         .accounts
-        .get(OBLIGATION_IX_INDEX)
+        .get(market.obligation_ix_index())
         .map(|m| &m.pubkey == obligation)
         .unwrap_or(false);
     let source_ok = ix
         .accounts
-        .get(USER_SOURCE_LIQUIDITY_IX_INDEX)
+        .get(market.source_ix_index())
         .map(|m| &m.pubkey == keeper_usdc)
         .unwrap_or(false);
     if !obligation_ok || !source_ok {
         return false;
     }
     let mut le = [0u8; 8];
-    le.copy_from_slice(&ix.data[8..16]);
+    le.copy_from_slice(&ix.data[amt_off..amt_off + 8]);
     let liquidity_amount = u64::from_le_bytes(le);
     // Reject the "repay all" sentinel and require an exact declared amount == released amount.
     liquidity_amount != u64::MAX && liquidity_amount == amount

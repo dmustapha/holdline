@@ -32,8 +32,15 @@ pub struct InitVault<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64, keeper: Pubkey) -> Result<()> {
+pub fn handler(ctx: Context<InitVault>, trigger_ltv_bps: u16, cap_per_fire: u64, keeper: Pubkey, market: u8) -> Result<()> {
+    // D2: bind the vault to a lending market (0 = Kamino, 1 = Save). Reject any unknown market id so a
+    // vault can never be armed against a market the program has no descriptor for.
+    require!(
+        crate::markets::Market::from_u8(market).is_some(),
+        crate::errors::VaultError::BadObligation
+    );
     let v = &mut ctx.accounts.vault;
+    v.market = market;
     v.owner = ctx.accounts.owner.key();
     v.obligation = ctx.accounts.obligation.key();
     v.usdc_mint = ctx.accounts.usdc_mint.key();

@@ -50,7 +50,7 @@ async function main(): Promise<void> {
   // init_vault (idempotent-ish: skip if already exists)
   const existing = await conn.getAccountInfo(vaultPda);
   if (!existing) {
-    const initIx = await m.initVault(TRIGGER_LTV_BPS, new BN(CAP_PER_FIRE_USDC * USDC_FACTOR), KEEPER_PUBKEY)
+    const initIx = await m.initVault(TRIGGER_LTV_BPS, new BN(CAP_PER_FIRE_USDC * USDC_FACTOR), KEEPER_PUBKEY, 0)
       .accounts({
         owner: demo.publicKey, obligation, usdcMint: USDC_MINT, vault: vaultPda,
         reserveUsdc, reserveAuthority, systemProgram: SYSTEM, tokenProgram: TOKEN_PROGRAM, rent: RENT,

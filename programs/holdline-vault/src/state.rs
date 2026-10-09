@@ -14,7 +14,9 @@ pub struct VaultState {
     pub last_fire_ts: i64,
     pub reserve_bump: u8,
     pub state_bump: u8,
+    pub market: u8,             // D2: 0 = Kamino, 1 = Save — selects the bound lending market descriptor
 }
 impl VaultState {
-    pub const LEN: usize = 8 + 32 * 4 + 2 + 8 * 2 + 8 + 1 + 1;
+    // D2 adds exactly ONE byte (market: u8); keeper's VAULT_STATE_LEN mirrors this in lockstep.
+    pub const LEN: usize = 8 + 32 * 4 + 2 + 8 * 2 + 8 + 1 + 1 + 1;
 }

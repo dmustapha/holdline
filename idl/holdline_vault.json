@@ -197,6 +197,10 @@
         {
           "name": "keeper",
           "type": "pubkey"
+        },
+        {
+          "name": "market",
+          "type": "u8"
         }
       ]
     },
@@ -530,7 +534,9 @@
         {
           "name": "obligation",
           "docs": [
-            "(never written) to cap the release at the reserve's live debt (full custody closure)."
+            "checked against the bound market's program id in the handler (market-agnostic — Kamino or Save;",
+            "a dynamic `owner =` constraint is not expressible, so the check lives in enforce_bound_repay).",
+            "Read (never written) to cap the release at the reserve's live debt (full custody closure)."
           ]
         }
       ],
@@ -682,6 +688,10 @@
           },
           {
             "name": "state_bump",
+            "type": "u8"
+          },
+          {
+            "name": "market",
             "type": "u8"
           }
         ]
