@@ -4,4 +4,4 @@
 {"control":"A release-only (no repay)","market":"save","attempted":"divert expecting RepayNotEnforced","expectedRevert":"RepayNotEnforced","observedRevert":"RepayNotEnforced","verdict":"CAUGHT"}
 {"control":"E non-bound obligation","market":"save","attempted":"divert expecting RepayNotEnforced","expectedRevert":"RepayNotEnforced","observedRevert":"RepayNotEnforced","verdict":"CAUGHT"}
 {"control":"D over-release beyond debt","market":"save","attempted":"divert expecting OverReleaseBeyondDebt","expectedRevert":"OverReleaseBeyondDebt","observedRevert":"OverReleaseBeyondDebt","verdict":"CAUGHT"}
-{"control":"LEGIT atomic repay","market":"save","attempted":"release + exact repay of the bound obligation","expectedRevert":null,"observedRevert":null,"verdict":"GREEN","sig":"4Bx2ERrztg6ifrttxLv8WAp5eqF82eLkY83hk6w6zcR5qVsHyLBWap6iqXnvgTrGBBcEsU3fbfSd1Z8x14EAkhdM"}
+{"control":"LEGIT atomic repay","market":"save","attempted":"release + exact repay of the bound obligation","expectedRevert":null,"observedRevert":null,"verdict":"GREEN","sig":"3vZtWY6Kgz1tQThkm9PEuH8QDKybZoLnsgaoBvYSGVTVBrtLE8n6s48xeUzW3UtLYbJrRLhpHo4C6Pu9BrYugSaS"}

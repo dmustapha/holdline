@@ -14,8 +14,10 @@ export interface SaveRow {
   ts: number; // unix seconds of confirmation
   market: string; // "kamino" | "save"
   obligation: string;
-  ltvBefore: number; // bps
-  ltvAfter: number; // bps
+  ltvBefore: number; // bps — best-effort; 0 when the LTV read is hours-gated/unavailable on the fork
+  ltvAfter: number; // bps — best-effort
+  debtBeforeUsdc?: number; // UI USDC obligation debt BEFORE the repay — the hours-independent save proof
+  debtAfterUsdc?: number; // UI USDC obligation debt AFTER the repay — (before - after) tracks repaidUsdc
   repaidUsdc: number; // UI USDC repaid
   sig: string; // confirmed tx signature — the proof
   source: SaveSource;
