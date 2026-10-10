@@ -17,7 +17,8 @@
     "test": "vitest run tests/unit tests/integration tests/contracts --exclude '**/*.live.ts'",
     "test:core": "vitest run core",
     "test:live": "vitest run '**/*.live.ts'",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "postinstall": "node scripts/patch-farms-sdk.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
