@@ -1,4 +1,4 @@
-# USER-ONBOARDING.md — HoldLine (LAW#7 USER-FIRST)
+# USER-ONBOARDING.md - HoldLine (LAW#7 USER-FIRST)
 
 HoldLine is designed from real users' entry, not dev convenience. Every class below has a real
 genesis (how they arrive with no prior HoldLine setup) and a real onboarding path to value. The

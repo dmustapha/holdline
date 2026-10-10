@@ -1,4 +1,4 @@
-# ROUTE-ARCHITECTURE.md — HoldLine (LAW#11)
+# ROUTE-ARCHITECTURE.md - HoldLine (LAW#11)
 
 The page/route architecture is derived from the frozen user model (USER-ONBOARDING.md), not crammed
 into one page. Each user class enters through a route built for it: the xStock Borrower uses the
@@ -9,20 +9,20 @@ consumes the API/status surface. This maps the ACTUAL shipped Next.js App Router
 ## ROUTES
 
 ### Pages
-- / — Landing + app surface (`app/src/app/page.tsx`). The money shot: a borrower connects a wallet, sees their real Kamino obligation and health, and arms Protect. Serves the xStock Borrower class. Landing legibility in 30 seconds: "borrow against xStocks, never get liquidated in your sleep."
-- /demo — Judge/Evaluator route (`app/src/app/demo/page.tsx`). The Lie Detector surface: an adversarial keeper's diverts each revert red on-chain, and a real protective repay goes green. Separate from the app so a cold judge reaches the proof without wallet/onboarding. Serves the Evaluator class.
+- / - Landing + app surface (`app/src/app/page.tsx`). The money shot: a borrower connects a wallet, sees their real Kamino obligation and health, and arms Protect. Serves the xStock Borrower class. Landing legibility in 30 seconds: "borrow against xStocks, never get liquidated in your sleep."
+- /demo - Judge/Evaluator route (`app/src/app/demo/page.tsx`). The Lie Detector surface: an adversarial keeper's diverts each revert red on-chain, and a real protective repay goes green. Separate from the app so a cold judge reaches the proof without wallet/onboarding. Serves the Evaluator class.
 
 ### API routes (Keeper Operator + app surface)
-- /api/protect/arm — arm a vault (fund reserve, set trigger).
-- /api/protect/status — per-vault protection status.
-- /api/protect/keeper-status — keeper liveness for an armed vault.
-- /api/keeper/status — global keeper worker health.
-- /api/kamino/market — live (cloned) Kamino market read.
-- /api/kamino/obligations — borrower obligation read.
-- /api/kamino/transaction/borrow — build a borrow tx (app flow).
-- /api/kamino/transaction/repay — build a repay tx (app flow).
-- /api/demo/mode — toggle demo view state (reads real cloned state, not mocked input).
-- /api/demo/simulate-gap — advances the cloned-fork price to the closed-hours gap scenario on REAL cloned Kamino state (it moves the fork, it does not fake a result; the repay that follows is the real on-chain instruction).
+- /api/protect/arm - arm a vault (fund reserve, set trigger).
+- /api/protect/status - per-vault protection status.
+- /api/protect/keeper-status - keeper liveness for an armed vault.
+- /api/keeper/status - global keeper worker health.
+- /api/kamino/market - live (cloned) Kamino market read.
+- /api/kamino/obligations - borrower obligation read.
+- /api/kamino/transaction/borrow - build a borrow tx (app flow).
+- /api/kamino/transaction/repay - build a repay tx (app flow).
+- /api/demo/mode - toggle demo view state (reads real cloned state, not mocked input).
+- /api/demo/simulate-gap - advances the cloned-fork price to the closed-hours gap scenario on REAL cloned Kamino state (it moves the fork, it does not fake a result; the repay that follows is the real on-chain instruction).
 
 ### In-window delta route additions
 - Save/Solend second-market reads reuse the `/api/kamino/*` shape generalized by the market descriptor (the net-new adapter surfaces under the same obligation/market API, market-agnostic).

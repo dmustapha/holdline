@@ -104,3 +104,16 @@ SUBMISSION.md
 /SUBMISSION-CHECKLIST.md
 /*-REPORT.prior-dev.md
 /.conductor-resume.md
+
+# conductor / pipeline internal runtime artifacts (never published)
+/.conductor-lock/
+/.conductor-owner.json
+/.conductor-owner.json.bak
+/.conductor-state.json.bak
+/.crossmodel-events.jsonl
+/.crossmodel-gate/
+/.dispatch-nonce.json
+/.watchdog-last-alert
+/.design-qa-verdict.json
+/VERIFY-OBSERVABLE-EVIDENCE.json
+/.sept-archive/
