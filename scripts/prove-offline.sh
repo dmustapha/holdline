@@ -12,10 +12,15 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LEDGER="$ROOT/.localnet-ledger"
 VAULT_ID="4YSxGTVgKBca27gxkgZRK4GbxGm2afnBTya7mTLiSJcw"
 MARKET="${1:-kamino}"   # kamino | save
+# Vault program binary: prefer a fresh local build (target/deploy), else the COMMITTED fixture
+# (programs/holdline_vault.so) so a cold judge who clones can run prove without anchor-building.
+if [[ -f "$ROOT/target/deploy/holdline_vault.so" ]]; then VAULT_SO="$ROOT/target/deploy/holdline_vault.so";
+else VAULT_SO="$ROOT/programs/holdline_vault.so"; fi
 rm -rf "$LEDGER"
 
 # Fail fast if the proof would silently fake-pass (no fixtures) or port is taken.
 [[ -d "$ROOT/accounts" ]] || { echo "[prove] accounts/ fixtures missing — run npm run prove:capture first"; exit 1; }
+[[ -f "$VAULT_SO" ]] || { echo "[prove] vault .so missing (no target/deploy build and no committed programs/holdline_vault.so fixture)"; exit 1; }
 if lsof -ti:8899 >/dev/null 2>&1; then echo "[prove] port 8899 busy — aborting (no silent reuse)"; exit 1; fi
 
 # Save (Solend) RefreshReserve computes interest over (current_slot - reserve.last_update.slot). The
@@ -40,7 +45,7 @@ solana-test-validator --reset --ledger "$LEDGER" --rpc-port 8899 --quiet "${WARP
   --upgradeable-program KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD "$ROOT/programs/klend.so" none \
   --upgradeable-program FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr "$ROOT/programs/farms.so" none \
   --upgradeable-program So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo "$ROOT/programs/save.so" none \
-  --bpf-program "$VAULT_ID" "$ROOT/target/deploy/holdline_vault.so" &
+  --bpf-program "$VAULT_ID" "$VAULT_SO" &
 VALIDATOR_PID=$!
 trap 'kill "$VALIDATOR_PID" 2>/dev/null || true; rm -rf "$LEDGER"' EXIT
 
