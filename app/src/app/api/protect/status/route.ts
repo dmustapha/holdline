@@ -8,8 +8,8 @@ import { readVault, deriveVaultPda } from "@/lib/server/vault";
 import { isValidPubkey } from "@/lib/server/validate";
 import { getObligationView } from "@/lib/server/kamino";
 import { readKeeperStatus } from "@/lib/server/keeper-status";
-import { isClosed } from "../../../../../../core/src/market-hours";
-import { computeRepayToBuffer } from "../../../../../../core/src/ltv";
+import { isClosed } from "@/vendor/core/market-hours";
+import { computeRepayToBuffer } from "@/vendor/core/ltv";
 import type { ProtectStatus, ProtectSaveState } from "@/lib/types";
 
 export const runtime = "nodejs";

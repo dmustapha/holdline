@@ -9,7 +9,7 @@
 // The adapters (and klend-sdk + its orca WASM bindings) are imported LAZILY inside each function
 // so the heavy SDK is not evaluated at build-time page-data collection — only when a route runs.
 import { address, createNoopSigner, type Address } from "@solana/kit";
-import type { ObligationView } from "../../../../adapters/kamino/src/obligation";
+import type { ObligationView } from "@/vendor/adapters-kamino/obligation";
 
 // Pinned mainnet addresses (mirrors adapters/kamino/src/market.ts SOURCE LOCK). Kept inline so
 // this module has no eager klend import.
@@ -18,13 +18,13 @@ const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const USDC_RESERVE = "97zoywd8mPZsGTg8q1wdD2Wgkdrs2tqusp1Qqcxbyj7E";
 
 async function marketMod() {
-  return import("../../../../adapters/kamino/src/market");
+  return import("@/vendor/adapters-kamino/market");
 }
 async function txnsMod() {
-  return import("../../../../adapters/kamino/src/txns");
+  return import("@/vendor/adapters-kamino/txns");
 }
 async function obligationMod() {
-  return import("../../../../adapters/kamino/src/obligation");
+  return import("@/vendor/adapters-kamino/obligation");
 }
 
 function rpcUrl(): string {
