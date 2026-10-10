@@ -49,10 +49,11 @@ export function WaitlistHook() {
       <p className="hl-card-title">The overnight gap is real</p>
       <p className="hl-muted" style={{ marginBottom: 14 }}>
         In the last 12 months, TSLA, NVDA and AAPL opened more than 5% away from the prior close
-        four times — overnight gaps a sleeping leveraged borrower could not react to. A tail event,
-        and exactly the kind you insure against.{" "}
+        multiple times — overnight gaps a sleeping leveraged borrower could not react to. A tail
+        event, and exactly the kind you insure against.{" "}
         <span style={{ opacity: 0.7 }}>
-          (Source: public daily OHLC; recomputable via <code>scripts/overnight-gaps.ts</code>.)
+          (Exact count + dates: <code>evidence/overnight-gaps.jsonl</code>, recomputable via{" "}
+          <code>scripts/overnight-gaps.ts</code> — a rolling-window figure, so we don&apos;t hardcode it here.)
         </span>
       </p>
 
