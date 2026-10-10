@@ -90,3 +90,17 @@ SUBMISSION.md
 # deploy env backups — NEVER commit (funds-key leak)
 .env*.bak*
 *.bak.deploy
+.vercel
+
+# internal pipeline docs (kept on disk for the pipeline; not published to judges)
+/PRD.md
+/ARCHITECTURE.md
+/PLAN.md
+/INVARIANTS.md
+/CAMPAIGN-LAUNCH.md
+/JUDGE-PANEL.md
+/DEEP-RESEARCH-DELTA.md
+/FEATURE-OBSERVABLES-DELTA.md
+/SUBMISSION-CHECKLIST.md
+/*-REPORT.prior-dev.md
+/.conductor-resume.md
