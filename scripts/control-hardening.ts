@@ -13,9 +13,12 @@
 //     at the reserve's live debt read on-chain from the obligation. Needs cap_per_fire > debt.
 // Each control MUST fail on-chain; a SUCCESS is a hardening regression and exits non-zero.
 //   node_modules/.bin/ts-node scripts/control-hardening.ts
-import { Connection, Keypair, PublicKey, type TransactionInstruction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction, type TransactionInstruction } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync, createTransferInstruction } from "@solana/spl-token";
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import path from "node:path";
+
+const USDC_MINT_CTRL = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 
 // D3.1a — the committed Lie Detector evidence. One JSONL row per control (ARCH §5). The /demo panel
 // (via /api/demo/lie-detector) REPLAYS these rows; absent file -> 503 "proof not attached". A row is
@@ -127,10 +130,48 @@ async function expectRevert(conn: Connection, keeper: Keypair, label: string, ix
 }
 
 const SAVE_MARKET = process.env.PROVE_MARKET === "save";
+const SAVE_PROGRAM = "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo";
+const SYSTEM_PROGRAM = "11111111111111111111111111111111";
+
+// Run one control that MUST SUCCEED (negative control): send `ixs` and assert the tx CONFIRMS.
+// Used by DH-6b (redundant-but-honest double repay) to prove the guard is not over-broad. A REVERT
+// here is a FINDING (the guard is too strict) — it is logged and surfaced, never forced to pass.
+async function expectConfirm(conn: Connection, keeper: Keypair, label: string, ixs: TransactionInstruction[], market: "kamino" | "save"): Promise<void> {
+  try {
+    const sig = await sendKeeperTx(conn, keeper, ixs, true);
+    emitRow({ control: label, market, attempted: "legit release + matching repay + redundant repay (must confirm)", expectedRevert: null, observedRevert: null, verdict: "GREEN", sig });
+    console.log(`[control] PASSED (${label}) — tx CONFIRMED as required (negative control, sig=${sig.slice(0, 12)}…).`);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const observed = observedErrorFrom(msg);
+    emitRow({ control: label, market, attempted: "legit release + matching repay + redundant repay (must confirm)", expectedRevert: null, observedRevert: observed, verdict: "LEAKED" });
+    throw new Error(`NEGATIVE CONTROL FAILED (${label}): legit tx REVERTED (${observed}) — guard is TOO STRICT (a finding):\n${msg}`);
+  }
+}
 
 // Save repay identity: single u8 tag 11, declared u64 LE amount @ 1, obligation @ account idx 3.
 function isSaveRepay(ix: TransactionInstruction): boolean {
-  return ix.programId.toString() === "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo" && ix.data[0] === 11;
+  return ix.programId.toString() === SAVE_PROGRAM && ix.data[0] === 11;
+}
+
+// DH-4a — swap the Save repay SOURCE token account (idx 0, the released-USDC source) to a decoy, while
+// keeping tag 11 and the correct bound obligation. The vault's source_ix_index check must fail.
+function patchSaveRepaySource(ixs: TransactionInstruction[], decoy: PublicKey): TransactionInstruction[] {
+  return ixs.map((ix) => {
+    if (!isSaveRepay(ix)) return ix;
+    const keys = ix.keys.map((k, i) => (i === 0 ? { ...k, pubkey: decoy } : k)); // Save source @ idx 0
+    return { ...ix, keys } as TransactionInstruction;
+  });
+}
+
+// DH-4b — craft a BARE tag-11 ix addressed to a NON-Save program. data = [11, u64 LE amount]; accounts
+// cloned from a real Save repay so they look plausible. The vault's program-id check must fail: a
+// tag-11 byte to the wrong program is not a Save repay.
+function craftForeignTag11(realRepay: TransactionInstruction, amount: number, program: PublicKey): TransactionInstruction {
+  const data = Buffer.alloc(9);
+  data[0] = 11;
+  data.writeBigUInt64LE(BigInt(amount), 1);
+  return { programId: program, keys: realRepay.keys, data } as TransactionInstruction;
 }
 function patchSaveRepayAmount(ixs: TransactionInstruction[], value: bigint): TransactionInstruction[] {
   return ixs.map((ix) => {
@@ -175,6 +216,19 @@ async function mainSave(): Promise<void> {
   await expectRevert(conn, keeper, "A release-only (no repay)", [releaseIx], "RepayNotEnforced", "save");
   // CONTROL E — DIVERT to a non-bound obligation -> RepayNotEnforced (6004).
   await expectRevert(conn, keeper, "E non-bound obligation", [releaseIx, ...patchSaveRepayObligation(repayIxs, Keypair.generate().publicKey)], "RepayNotEnforced", "save");
+
+  // DH-4a — Save tag-11 DECOY, WRONG SOURCE. Keep tag 11 + correct bound obligation (idx 3), but swap
+  // the released-USDC source (idx 0) to a freshly generated decoy (NOT keeper_usdc). The vault's
+  // source_ix_index check fails -> RepayNotEnforced (6004). Proves a bare tag-11 is NOT a forgeable key.
+  await expectRevert(conn, keeper, "DH-4a Save tag-11 wrong-source", [releaseIx, ...patchSaveRepaySource(repayIxs, Keypair.generate().publicKey)], "RepayNotEnforced", "save");
+
+  // DH-4b — Save tag-11 DECOY, WRONG PROGRAM. A bare tag-11 ix (data=[11, u64 LE exact amount]) with
+  // otherwise-plausible accounts, but addressed to the SystemProgram (not Save). The vault's program-id
+  // check fails -> RepayNotEnforced (6004). A tag-11 to the wrong program is not a Save repay.
+  const realSaveRepay = repayIxs.find(isSaveRepay);
+  if (!realSaveRepay) throw new Error("DH-4b: no real Save repay ix found in bundle to clone accounts from");
+  const foreignTag11 = craftForeignTag11(realSaveRepay, amount, new PublicKey(SYSTEM_PROGRAM));
+  await expectRevert(conn, keeper, "DH-4b Save tag-11 wrong-program", [releaseIx, foreignTag11], "RepayNotEnforced", "save");
 
   // CONTROL D — over-release beyond live Save debt -> OverReleaseBeyondDebt (6006). Read live debt the
   // SAME way the on-chain cap does (SaveAdapter.reserveDebt == markets.rs read_debt_save), release
@@ -259,6 +313,43 @@ async function main(): Promise<void> {
     await expectRevert(conn, keeper, "D over-release beyond debt", [releaseIxD, ...repayIxsD], "OverReleaseBeyondDebt", "kamino");
   } else {
     console.log(`[control] SKIP D — cap_per_fire (${v.capPerFire / 1e6} USDC) <= debt+1 (${over / 1e6} USDC); re-seed with a higher cap to exercise the debt cap.`);
+  }
+
+  // ── DH-6 — multi-repay-in-one-tx cannot over-release ──────────────────────────────────────────────
+  // The guard captures the FIRST bound repay that matches the DECLARED release amount. These two
+  // controls prove (a) splitting a big release across small repays cannot over-release, and (b) a
+  // redundant second repay does not break a legitimate release (the guard is not over-broad).
+  // X = a safe fraction of debt; 2X stays <= cap (seed higher via SEED_CAP_USDC when exercising).
+  const halfAmount = Math.floor(amount / 2); // X
+  const doubleAmount = halfAmount * 2;        // 2X (== amount's even floor)
+
+  // DH-6a — OVER-RELEASE VIA SPLIT REPAYS (MUST REVERT). release(2X) + repay(X) + repay(X): the release
+  // declares 2X but each repay declares only X, so is_bound_repay (declared == released == 2X) matches
+  // NEITHER repay -> RepayNotEnforced (6004). Each repay bundle carries its own klend refreshes.
+  if (doubleAmount <= v.capPerFire && halfAmount > 0) {
+    const releaseIx2X = await buildReleaseIx(conn, keeper, v, doubleAmount);
+    const repayX_a = await buildRepayIxs(keeper, rpc, market, obligation as never, halfAmount);
+    const repayX_b = await buildRepayIxs(keeper, rpc, market, obligation as never, halfAmount);
+    await expectRevert(conn, keeper, "DH-6a over-release via split repays", [releaseIx2X, ...repayX_a, ...repayX_b], "RepayNotEnforced", "kamino");
+
+    // DH-6b — REDUNDANT-BUT-HONEST DOUBLE REPAY (MUST SUCCEED, negative control). release(X) + repay(X)
+    // + repay(X) where X <= debt: the first matching repay satisfies the bind; the second is harmless.
+    // This MUST CONFIRM — proving the guard does not reject legitimate txs. A revert here is a finding.
+    // The release funds the keeper with only X; the redundant SECOND repay moves another X of real
+    // tokens. That extra X is a klend TOKEN-BALANCE need, NOT part of the vault custody guard under test,
+    // so pre-fund the keeper ATA with X from the demo wallet to isolate the guard (without this, the tx
+    // reverts on klend's SPL transfer for insufficient funds — a false negative that masks the guard).
+    const demo = loadKp(process.env.DEMO_KEYPAIR ?? `${process.env.HOME}/.config/solana/holdline-demo.json`);
+    const demoUsdc = getAssociatedTokenAddressSync(USDC_MINT_CTRL, demo.publicKey);
+    const keeperUsdc = getAssociatedTokenAddressSync(USDC_MINT_CTRL, keeper.publicKey);
+    await sendAndConfirmTransaction(conn, new Transaction().add(createTransferInstruction(demoUsdc, keeperUsdc, demo.publicKey, halfAmount)), [demo], { commitment: "confirmed" });
+    console.log(`[control] DH-6b prefund: +${halfAmount / 1e6} USDC demo->keeper (isolates klend token need from the guard).`);
+    const releaseIxX = await buildReleaseIx(conn, keeper, v, halfAmount);
+    const repayX_c = await buildRepayIxs(keeper, rpc, market, obligation as never, halfAmount);
+    const repayX_d = await buildRepayIxs(keeper, rpc, market, obligation as never, halfAmount);
+    await expectConfirm(conn, keeper, "DH-6b redundant honest double repay", [releaseIxX, ...repayX_c, ...repayX_d], "kamino");
+  } else {
+    console.log(`[control] SKIP DH-6 — 2X (${doubleAmount / 1e6} USDC) > cap_per_fire (${v.capPerFire / 1e6} USDC); re-seed with a higher cap.`);
   }
 
   // LEGIT GREEN row — the ONE thing the keeper legitimately CAN do: an atomic release+repay of the
