@@ -1,28 +1,37 @@
 // /api/waitlist — the demand-signal waitlist (ARCH §6.2).
-// POST {email, borrowsToday:boolean, venue:string} appends one row to evidence/waitlist.jsonl,
-// idempotent on email (a repeat email never double-counts). GET returns {count}.
-// No PII beyond email; no external service, no third-party analytics — the file IS the datastore,
-// consistent with the network-free discipline. Input is validated and real errors surface; there is
-// no synthetic success (INVARIANT #3 / #6). `borrowsToday` + `venue` make this a real demand signal
-// (active leveraged borrowers by venue), not a vanity count.
+// POST {email, borrowsToday:boolean, venue:string} appends one row, idempotent on email (a repeat
+// email never double-counts). GET returns {count}. No PII beyond email; no external service, no
+// third-party analytics — a file IS the datastore, consistent with the network-free discipline.
+// Input is validated and real errors surface; there is no synthetic success (INVARIANT #3 / #6).
+//
+// SERVERLESS-SAFE: on a read-only/ephemeral serverless FS the repo-root store is unwritable, so we
+// fall back to /tmp (the one writable serverless dir). When the fallback is used the write still
+// succeeds within the instance but is ephemeral, so we surface persisted:false honestly rather than
+// crash or imply a durable signup. The GET count never throws — an unreadable store reads as 0.
 import { NextResponse } from "next/server";
 import { readFile, appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { tmpdir } from "node:os";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function waitlistPath(): string {
-  // app/ is the Next root; the repo root (where evidence/ lives) is one level up.
+// Durable store (writable in local dev + the unit test): app/ is the Next root; the repo root
+// (where evidence/ lives) is one level up.
+function primaryPath(): string {
   return path.join(process.cwd(), "..", "evidence", "waitlist.jsonl");
+}
+// Ephemeral fallback for read-only serverless filesystems.
+function fallbackPath(): string {
+  return path.join(tmpdir(), "holdline-waitlist.jsonl");
 }
 
 type Row = { email: string; borrowsToday: boolean; venue: string; ts: string };
 
-async function readRows(): Promise<Row[]> {
+async function readFileRows(file: string): Promise<Row[]> {
   let raw: string;
   try {
-    raw = await readFile(waitlistPath(), "utf8");
+    raw = await readFile(file, "utf8");
   } catch {
     return [];
   }
@@ -37,6 +46,38 @@ async function readRows(): Promise<Row[]> {
     }
   }
   return rows;
+}
+
+// Union of both stores (durable + any ephemeral fallback), deduped by email, so GET never throws
+// and a count survives across either store being the live one in a given environment.
+async function readRows(): Promise<Row[]> {
+  const [primary, fallback] = await Promise.all([
+    readFileRows(primaryPath()),
+    readFileRows(fallbackPath()),
+  ]);
+  const byEmail = new Map<string, Row>();
+  for (const r of [...primary, ...fallback]) byEmail.set(r.email, r);
+  return [...byEmail.values()];
+}
+
+// Append to the durable store; if the FS is read-only/ephemeral (EROFS/ENOENT), fall back to /tmp.
+// Returns whether the write landed in a DURABLE store (persisted) — never throws on an FS failure.
+async function appendRow(row: Row): Promise<{ persisted: boolean }> {
+  const line = JSON.stringify(row) + "\n";
+  try {
+    const file = primaryPath();
+    await mkdir(path.dirname(file), { recursive: true });
+    await appendFile(file, line, "utf8");
+    return { persisted: true };
+  } catch {
+    // Read-only or ephemeral serverless FS — degrade honestly to /tmp.
+  }
+  try {
+    await appendFile(fallbackPath(), line, "utf8");
+  } catch {
+    // Even /tmp unavailable — the signup is not recorded on-host; still do not crash.
+  }
+  return { persisted: false };
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,7 +110,7 @@ export async function POST(req: Request) {
   const rows = await readRows();
   if (rows.some((r) => r.email === normalized)) {
     // Idempotent on email: no double-count, no synthetic new row.
-    return NextResponse.json({ ok: true, count: rows.length, duplicate: true });
+    return NextResponse.json({ ok: true, count: rows.length, duplicate: true, persisted: true });
   }
 
   const row: Row = {
@@ -78,8 +119,6 @@ export async function POST(req: Request) {
     venue: venue.trim(),
     ts: new Date().toISOString(),
   };
-  const file = waitlistPath();
-  await mkdir(path.dirname(file), { recursive: true });
-  await appendFile(file, JSON.stringify(row) + "\n", "utf8");
-  return NextResponse.json({ ok: true, count: rows.length + 1, duplicate: false });
+  const { persisted } = await appendRow(row);
+  return NextResponse.json({ ok: true, count: rows.length + 1, duplicate: false, persisted });
 }

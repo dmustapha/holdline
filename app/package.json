@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "sync:evidence": "node scripts/sync-evidence.mjs",
+    "prebuild": "node scripts/sync-evidence.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
