@@ -21,6 +21,10 @@
 
 **Watch (44s):** https://youtu.be/ew1HLIt3rP8
 
+**Live app:** https://holdline-protect.vercel.app (the `/demo` Lie Detector replays the real on-chain revert evidence; the keeper's private key is never on the host)
+
+**Reproduce the proof yourself ($0, no network):** `npm run prove` boots a mainnet fork from committed fixtures and fires the real atomic save. This reproducible fork, not the live app, is the validity spine.
+
 You trigger the overnight gap, then do nothing. The keeper repays the loan on its own, the health bar drops red to green, and on-chain it is one signer (the keeper) in a single atomic release + repay. Your key never touches it.
 
 ## What is Holdline?
