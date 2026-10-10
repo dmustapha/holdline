@@ -1,0 +1,24 @@
+{
+  "schema":"stage5-hardening/1","produced_by":"stress_test+debug","run_profile":"CAMPAIGN",
+  "attack_classes":[
+    {"class":"double-release-skim","owner":"stress","fuzz":false},
+    {"class":"repay-amount-forgery","owner":"stress","fuzz":true},
+    {"class":"over-release-beyond-debt","owner":"stress","fuzz":true},
+    {"class":"repay-identity-forgery","owner":"stress","fuzz":false},
+    {"class":"secrets-and-mock-leak-scan","owner":"debug","fuzz":false},
+    {"class":"reentrancy-structural","owner":"debug","fuzz":false}
+  ],
+  "fuzz":{"ran":true,"note":"repay amount fuzzed across u64::MAX, debt+1, inexact(-1), split-2X on both markets"},
+  "spine":{"paths":[
+    {"vector":"keeper double-release reusing one repay (B)","status":"CLOSED"},
+    {"vector":"u64::MAX repay-all sentinel (C1)","status":"CLOSED"},
+    {"vector":"inexact declared amount (C2)","status":"CLOSED"},
+    {"vector":"release with no repay (A)","status":"CLOSED"},
+    {"vector":"repay of non-bound obligation (E)","status":"CLOSED"},
+    {"vector":"over-release beyond live debt (D) - both markets","status":"CLOSED"},
+    {"vector":"Save tag-11 wrong-source decoy (DH-4a)","status":"CLOSED"},
+    {"vector":"Save tag-11 wrong-program decoy (DH-4b)","status":"CLOSED"},
+    {"vector":"split-repay over-release (DH-6a)","status":"CLOSED"}
+  ]},
+  "findings":[]
+}
