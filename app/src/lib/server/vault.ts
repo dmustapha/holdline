@@ -99,7 +99,7 @@ export async function buildArmIxs(params: {
   const cap = new BN(Math.round(params.capPerFireUsdc * 1_000_000));
 
   const initIx = await program.methods
-    .initVault(params.triggerLtvBps, cap, keeper)
+    .initVault(params.triggerLtvBps, cap, keeper, 0) // market: 0 = Kamino (D2 market-agnostic arg)
     .accounts({
       owner,
       obligation,
@@ -113,6 +113,12 @@ export async function buildArmIxs(params: {
   const ixs = [initIx];
 
   if (params.reserveAmountUsdc > 0) {
+    // The reserve is funded from the owner's OWN USDC, so the owner must be a signing wallet
+    // (on-curve). An off-curve address (a PDA, e.g. a program-owned obligation) cannot sign and
+    // has no ATA - fail with a clear message instead of a bare TokenOwnerOffCurveError.
+    if (!PublicKey.isOnCurve(owner.toBytes())) {
+      throw new Error("owner must be a wallet address (on-curve) to fund the reserve");
+    }
     const ownerUsdc = getAssociatedTokenAddressSync(USDC_MINT, owner);
     // create the owner USDC ATA if absent (idempotent create is safe to include)
     const info = await conn.getAccountInfo(ownerUsdc);
@@ -128,6 +134,7 @@ export async function buildArmIxs(params: {
         vault,
         owner,
         ownerUsdc,
+        reserveUsdc, // the fund_reserve ix requires the reserve token account (IDL: reserve_usdc)
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();

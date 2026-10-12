@@ -89,7 +89,7 @@ async function main(): Promise<void> {
 
   const m = program.methods as never as Record<string, (...a: unknown[]) => { accounts: (a: Record<string, unknown>) => { instruction: () => Promise<never> } }>;
 
-  const initIx = await m.initVault(TRIGGER_LTV_BPS, new BN(CAP_PER_FIRE_USDC * USDC_FACTOR), keeperPubkey)
+  const initIx = await m.initVault(TRIGGER_LTV_BPS, new BN(CAP_PER_FIRE_USDC * USDC_FACTOR), keeperPubkey, 0)
     .accounts({
       owner: demo.publicKey,
       obligation,
