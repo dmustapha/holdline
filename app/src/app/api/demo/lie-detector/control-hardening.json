@@ -40,14 +40,6 @@
     "verdict": "CAUGHT"
   },
   {
-    "control": "D over-release beyond debt",
-    "market": "kamino",
-    "attempted": "divert expecting OverReleaseBeyondDebt",
-    "expectedRevert": "OverReleaseBeyondDebt",
-    "observedRevert": "OverReleaseBeyondDebt",
-    "verdict": "CAUGHT"
-  },
-  {
     "control": "DH-6a over-release via split repays",
     "market": "kamino",
     "attempted": "divert expecting RepayNotEnforced",
@@ -62,7 +54,7 @@
     "expectedRevert": null,
     "observedRevert": null,
     "verdict": "GREEN",
-    "sig": "44KfQVen2odvyhpzVsPLz1nrmmHPiyeMdomxXJqVCLPZvfjhBfEfUKYsuppNMGDCBzk4vnVGp52ewWNG9D9sp4Et"
+    "sig": "5uJkdXpF5Tg7M58a21attGyDeM5PvuiLMQdC2G9pw2QCMSGVV8zr9KCXfhXWZTPKyaahVoNN2kZzEZxosGPpSy4W"
   },
   {
     "control": "LEGIT atomic repay",
@@ -71,6 +63,79 @@
     "expectedRevert": null,
     "observedRevert": null,
     "verdict": "GREEN",
-    "sig": "5ctve7XW1rmoJDKKK7oAMrA2twvVUNhvGDMoVbL13dmZvFxiQzZSmTwsqjjfcRwe4H1wduaHQRMh5TbvXZPTKkHt"
+    "sig": "PbsW3T5SCEsT2ccG7Rwq4gD66ysJGpZLpTZnD5zbBrdeWxTe2rvnanFwpyQJbSWW2Do62Cxn3WW5TNBWuP31k3a"
+  },
+  {
+    "control": "B double-release skim",
+    "market": "save",
+    "attempted": "divert expecting MultipleReleases",
+    "expectedRevert": "MultipleReleases",
+    "observedRevert": "MultipleReleases",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "C1 repay-all sentinel",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "C2 inexact amount",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "A release-only (no repay)",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "E non-bound obligation",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "DH-4a Save tag-11 wrong-source",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "DH-4b Save tag-11 wrong-program",
+    "market": "save",
+    "attempted": "divert expecting RepayNotEnforced",
+    "expectedRevert": "RepayNotEnforced",
+    "observedRevert": "RepayNotEnforced",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "D over-release beyond debt",
+    "market": "save",
+    "attempted": "divert expecting OverReleaseBeyondDebt",
+    "expectedRevert": "OverReleaseBeyondDebt",
+    "observedRevert": "OverReleaseBeyondDebt",
+    "verdict": "CAUGHT"
+  },
+  {
+    "control": "LEGIT atomic repay",
+    "market": "save",
+    "attempted": "release + exact repay of the bound obligation",
+    "expectedRevert": null,
+    "observedRevert": null,
+    "verdict": "GREEN",
+    "sig": "2Woiq6KE5khNXwfGxkxR7wUACrtiYJSnvShT2VMH9gSd4QHg1aRgwksHTQ54prPoNuxA8nzbQpNPqdRsK64bFTzC"
   }
 ]

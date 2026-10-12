@@ -3,9 +3,11 @@
 
   # Holdline
 
-  **Borrow against your tokenized stocks on Kamino, and never get liquidated in your sleep.**
+  **Borrow against your tokenized stocks, and never get liquidated in your sleep.**
 
   A protective vault + autonomous keeper that repays your loan to a safe buffer while the equity market is closed, with no user click, and cannot touch your funds for anything except that repay.
+
+  **A protection layer, not a single-market feature:** the same repay-only vault protects obligations on **two lending markets, Kamino KLend and Save (Solend)** - the custody guarantee is market-agnostic and proven on both.
 
   ![Solana](https://img.shields.io/badge/Solana-Anchor%200.32-14F195?logo=solana&logoColor=black)
   ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
