@@ -14,9 +14,9 @@
     "seed": "ts-node scripts/seed-demo.ts",
     "verify": "ts-node scripts/verify-claims.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run tests/unit tests/integration tests/contracts --exclude '**/*.live.ts'",
+    "test": "vitest run tests/unit tests/integration tests/contracts --exclude '**/*.live.test.ts'",
     "test:core": "vitest run core",
-    "test:live": "vitest run '**/*.live.ts'",
+    "test:live": "vitest run tests/contracts/vault-guardrails.live.test.ts tests/integration/obligation.live.test.ts",
     "check": "npm run typecheck && npm run test",
     "postinstall": "node scripts/patch-farms-sdk.mjs"
   },
