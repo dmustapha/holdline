@@ -54,7 +54,7 @@
     "expectedRevert": null,
     "observedRevert": null,
     "verdict": "GREEN",
-    "sig": "5uJkdXpF5Tg7M58a21attGyDeM5PvuiLMQdC2G9pw2QCMSGVV8zr9KCXfhXWZTPKyaahVoNN2kZzEZxosGPpSy4W"
+    "sig": "2zBqDpaNr4Ud4EPq3DuHDsAcpMsFevpe2xqoF1W9qL7D66Jh7zueMoDvqdxSFYgiaMzcUtcmbVggSpae8Y8LTz1X"
   },
   {
     "control": "LEGIT atomic repay",
@@ -63,7 +63,7 @@
     "expectedRevert": null,
     "observedRevert": null,
     "verdict": "GREEN",
-    "sig": "PbsW3T5SCEsT2ccG7Rwq4gD66ysJGpZLpTZnD5zbBrdeWxTe2rvnanFwpyQJbSWW2Do62Cxn3WW5TNBWuP31k3a"
+    "sig": "2p8gu5YSeLAScXM6jbFECRcxXZ4ySnE5wsPYptehDPKCJyv4WShWJuAHKV5GdwcmLZwmE2hLPYtJSbBT8aoam2GD"
   },
   {
     "control": "B double-release skim",
@@ -136,6 +136,6 @@
     "expectedRevert": null,
     "observedRevert": null,
     "verdict": "GREEN",
-    "sig": "2Woiq6KE5khNXwfGxkxR7wUACrtiYJSnvShT2VMH9gSd4QHg1aRgwksHTQ54prPoNuxA8nzbQpNPqdRsK64bFTzC"
+    "sig": "3QDb9JLJErrqrG1C2RGeYXBktXnRdpiLfNvb7wTci2xhvZ2eaY4U3Y3SnNnpNYKnr53Uav83ijdtfFyrssT5eTjK"
   }
 ]
